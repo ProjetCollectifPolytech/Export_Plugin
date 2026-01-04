@@ -59,7 +59,7 @@ $string['grade_source_help'] = 'Choose how to match identifiers in your file';
 $string['btn_process_download'] = 'Process and Download Filled File';
 
 // Formats.
-$string['format_university_standard_name'] = 'University Standard Format';
+$string['format_university_standard_name'] = 'Apogé';
 $string['format_university_standard_desc'] = 'Skip 17 header rows, Column A = ID, Column E = Grade';
 
 // Help.

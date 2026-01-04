@@ -59,7 +59,7 @@ $string['grade_source_help'] = 'Choisissez comment faire correspondre les identi
 $string['btn_process_download'] = 'Traiter et Télécharger le Fichier Rempli';
 
 // Formats.
-$string['format_university_standard_name'] = 'Format Standard Université';
+$string['format_university_standard_name'] = 'Apogé';
 $string['format_university_standard_desc'] = 'Ignorer 17 lignes d\'en-tête, Colonne A = ID, Colonne E = Note';
 
 // Help.

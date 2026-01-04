@@ -1,0 +1,116 @@
+{{!
+    Upload form template for Grade Filler
+    
+    Displays file upload form with format and grade source selection.
+    UI/UX inspired by anonimapper for visual consistency.
+}}
+
+<div class="local-gradefiller-upload">
+
+    <!-- Activity Information -->
+    <div class="alert alert-info">
+        <h5>{{#str}}activity_info, local_gradefiller{{/str}}</h5>
+        <p>
+            <strong>{{#str}}activity, local_gradefiller{{/str}}:</strong> {{activity_name}}<br>
+            <strong>{{#str}}type, local_gradefiller{{/str}}:</strong> {{activity_type}}
+        </p>
+        {{#supports_anonymous}}
+        <p class="mb-0">
+            <i class="fa fa-check-circle text-success"></i>
+            {{#str}}anonymous_supported, local_gradefiller{{/str}}: <strong>{{driver_name}}</strong>
+        </p>
+        {{/supports_anonymous}}
+    </div>
+
+    <!-- Upload Form -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">{{#str}}upload_spreadsheet, local_gradefiller{{/str}}</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{{wwwroot}}/local/gradefiller/index.php" enctype="multipart/form-data" id="gradefiller-form">
+                <input type="hidden" name="id" value="{{cmid}}">
+                <input type="hidden" name="action" value="process_upload">
+                <input type="hidden" name="sesskey" value="{{sesskey}}">
+                
+                <!-- File Upload -->
+                <div class="form-group">
+                    <label for="spreadsheet">{{#str}}spreadsheet_file, local_gradefiller{{/str}}</label>
+                    <div class="file-drop-zone" id="file-drop-zone">
+                        <input type="file" class="file-input" id="spreadsheet" name="spreadsheet" 
+                               accept=".xlsx,.xls,.xlsm,.ods,.csv" required>
+                        <div class="drop-zone-content">
+                            <i class="fa fa-cloud-upload fa-3x text-muted mb-2"></i>
+                            <p class="mb-1"><strong>{{#str}}drag_drop_zone, local_gradefiller{{/str}}</strong></p>
+                            <p class="text-muted">{{#str}}or_click_to_select, local_gradefiller{{/str}}</p>
+                            <p class="file-name" id="file-name" style="display: none;">
+                                <i class="fa fa-file"></i> <span class="text-success" id="file-name-text"></span>
+                            </p>
+                        </div>
+                    </div>
+                    <small class="form-text text-muted">
+                        {{#str}}file_formats_accepted, local_gradefiller{{/str}}
+                    </small>
+                </div>
+
+                <div class="form-row">
+                    <!-- Format Selection -->
+                    <div class="form-group col-md-6">
+                        <label for="format">{{#str}}spreadsheet_format, local_gradefiller{{/str}}</label>
+                        <select class="form-control" id="format" name="format" required>
+                            <option value="">{{#str}}select_format, local_gradefiller{{/str}}</option>
+                            {{#formats}}
+                            <option value="{{key}}" data-description="{{description}}">{{name}}</option>
+                            {{/formats}}
+                        </select>
+                        <small class="form-text text-muted" id="format-description"></small>
+                    </div>
+
+                    <!-- Grade Source Selection -->
+                    <div class="form-group col-md-6">
+                        <label for="gradesource">{{#str}}grade_source, local_gradefiller{{/str}}</label>
+                        <select class="form-control" id="gradesource" name="gradesource" required>
+                            <option value="standard">{{#str}}source_standard, local_gradefiller{{/str}}</option>
+                            {{#supports_anonymous}}
+                            <option value="anonymous">{{#str}}source_anonymous, local_gradefiller{{/str}}</option>
+                            {{/supports_anonymous}}
+                        </select>
+                        <small class="form-text text-muted">
+                            {{#str}}grade_source_help, local_gradefiller{{/str}}
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fa fa-download"></i>
+                        {{#str}}btn_process_download, local_gradefiller{{/str}}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Help Section -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">{{#str}}how_it_works, local_gradefiller{{/str}}</h5>
+        </div>
+        <div class="card-body">
+            <ol>
+                <li>{{#str}}help_step1, local_gradefiller{{/str}}</li>
+                <li>{{#str}}help_step2, local_gradefiller{{/str}}</li>
+                <li>{{#str}}help_step3, local_gradefiller{{/str}}</li>
+                <li>{{#str}}help_step4, local_gradefiller{{/str}}</li>
+            </ol>
+        </div>
+    </div>
+
+</div>
+
+{{#js}}
+require(['local_gradefiller/upload_form'], function(UploadForm) {
+    UploadForm.init();
+});
+{{/js}}

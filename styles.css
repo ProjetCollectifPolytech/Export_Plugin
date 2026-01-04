@@ -1,0 +1,133 @@
+/* Styles for Grade Filler plugin - Inspired by anonimapper for visual consistency */
+
+.local-gradefiller-upload {
+    margin-top: 20px;
+}
+
+.local-gradefiller-upload .card {
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* File Drop Zone */
+.file-drop-zone {
+    border: 2px dashed #ced4da;
+    border-radius: 8px;
+    padding: 30px;
+    text-align: center;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.file-drop-zone:hover {
+    border-color: #007bff;
+    background-color: #e7f3ff;
+}
+
+.file-drop-zone.drag-over {
+    border-color: #28a745;
+    background-color: #d4edda;
+    border-style: solid;
+}
+
+.file-drop-zone .file-input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.drop-zone-content {
+    pointer-events: none;
+}
+
+.file-drop-zone .fa-cloud-upload {
+    transition: transform 0.3s ease;
+}
+
+.file-drop-zone:hover .fa-cloud-upload {
+    transform: scale(1.1);
+}
+
+.file-name {
+    margin-top: 15px;
+    font-weight: 500;
+}
+
+.file-drop-zone.has-file {
+    border-color: #28a745;
+    background-color: #d4edda;
+}
+
+.file-drop-zone.has-file .fa-cloud-upload {
+    color: #28a745 !important;
+}
+
+/* Form Elements */
+.local-gradefiller-upload .form-control {
+    border-radius: 4px;
+}
+
+.local-gradefiller-upload select.form-control {
+    height: calc(2.25rem + 2px);
+}
+
+/* Buttons */
+.local-gradefiller-upload .btn-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+    padding: 10px 30px;
+}
+
+.local-gradefiller-upload .btn-primary:hover {
+    background-color: #0056b3;
+    border-color: #004085;
+}
+
+/* Alert Boxes */
+.local-gradefiller-upload .alert {
+    border-radius: 4px;
+}
+
+.local-gradefiller-upload .alert-info {
+    border-left: 4px solid #17a2b8;
+}
+
+/* Text Colors */
+.local-gradefiller-upload .text-success {
+    color: #28a745 !important;
+}
+
+.local-gradefiller-upload .text-muted {
+    color: #6c757d !important;
+}
+
+/* Help Section */
+.local-gradefiller-upload ol {
+    line-height: 1.8;
+    padding-left: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .file-drop-zone {
+        padding: 20px;
+    }
+
+    .local-gradefiller-upload .form-row {
+        flex-direction: column;
+    }
+
+    .local-gradefiller-upload .form-row .form-group {
+        width: 100% !important;
+    }
+}

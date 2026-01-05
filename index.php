@@ -28,7 +28,7 @@ use local_gradefiller\manager;
 
 // Get parameters.
 $cmid = required_param('id', PARAM_INT);
-$action = optional_param('action', '', PARAM_ALPHA);
+$action = optional_param('action', '', PARAM_ALPHANUMEXT);
 
 // Get course module and course.
 $cm = get_coursemodule_from_id('', $cmid, 0, false, MUST_EXIST);

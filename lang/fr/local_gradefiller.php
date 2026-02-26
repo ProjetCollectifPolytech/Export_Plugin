@@ -32,6 +32,7 @@ $string['gradefiller:use'] = 'Utiliser le remplisseur de notes dans un tableur';
 
 // Driver names.
 $string['driver_offlinequiz'] = 'Test Hors Ligne (Anonyme)';
+$string['driver_anonymousgrader'] = 'Correcteur Anonyme (Scanner)';
 
 // Page.
 $string['page_title'] = 'Remplir les Notes dans un Tableur';

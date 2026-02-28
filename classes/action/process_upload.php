@@ -59,9 +59,10 @@ class process_upload extends base_action {
         $tempfile = null;
 
         try {
-            // Move uploaded file to temp directory.
+            // Move uploaded file to temp directory with unique name to avoid collisions.
             $tempdir = make_temp_directory('gradefiller');
-            $tempfile = $tempdir . '/' . clean_filename($_FILES['spreadsheet']['name']);
+            $originalext = strtolower(pathinfo($_FILES['spreadsheet']['name'], PATHINFO_EXTENSION));
+            $tempfile = $tempdir . '/' . uniqid('upload_', true) . '.' . $originalext;
             move_uploaded_file($_FILES['spreadsheet']['tmp_name'], $tempfile);
 
             // Process file.
@@ -72,6 +73,11 @@ class process_upload extends base_action {
                 $this->course->id,
                 $gradesource
             );
+
+            // Cleanup the original uploaded temp file.
+            if (file_exists($tempfile)) {
+                @unlink($tempfile);
+            }
 
             // Detect file extension and generate download filename.
             $extension = strtolower(pathinfo($result['filepath'], PATHINFO_EXTENSION));

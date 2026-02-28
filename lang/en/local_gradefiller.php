@@ -83,3 +83,5 @@ $string['error_format_insufficient_rows'] = 'File must have at least {$a} rows';
 $string['error_format_no_identifiers'] = 'No identifiers found in the expected column';
 $string['error_no_permission'] = 'You do not have permission to access this page';
 $string['error_no_grade_item'] = 'This activity does not have a grade item';
+$string['invalidaction'] = 'Invalid action requested';
+$string['error_unsupported_write_format'] = 'File format "{$a}" is not supported for writing. Please use .xlsx or .xlsm.';

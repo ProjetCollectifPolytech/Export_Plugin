@@ -83,3 +83,5 @@ $string['error_format_insufficient_rows'] = 'Le fichier doit avoir au moins {$a}
 $string['error_format_no_identifiers'] = 'Aucun identifiant trouvé dans la colonne attendue';
 $string['error_no_permission'] = 'Vous n\'avez pas la permission d\'accéder à cette page';
 $string['error_no_grade_item'] = 'Cette activité n\'a pas d\'élément de notation';
+$string['invalidaction'] = 'Action demandée invalide';
+$string['error_unsupported_write_format'] = 'Le format de fichier "{$a}" n\'est pas supporté en écriture. Veuillez utiliser .xlsx ou .xlsm.';

@@ -141,8 +141,14 @@ class format_university_standard implements spreadsheet_format_interface {
 
         // 1. Préparation du fichier de sortie
         $extension = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
+
+        // Validate that the file format supports ZipArchive-based writing.
+        $supportedwriteformats = ['xlsx', 'xlsm'];
+        if (!in_array($extension, $supportedwriteformats)) {
+            throw new \moodle_exception('error_unsupported_write_format', 'local_gradefiller', '', $extension);
+        }
         $tempdir = make_temp_directory('gradefiller');
-        $outputfile = $tempdir . '/' . 'filled_' . time() . '.' . $extension;
+        $outputfile = $tempdir . '/' . 'filled_' . uniqid('', true) . '.' . $extension;
 
         // On copie le fichier original (ne jamais travailler sur l'original)
         if (!copy($filepath, $outputfile)) {

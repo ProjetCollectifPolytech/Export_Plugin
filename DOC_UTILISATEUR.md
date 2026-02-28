@@ -1,8 +1,8 @@
-# Documentation Utilisateur — local_gradefiller (v1.0.0-alpha)
+# Documentation Utilisateur — local_gradefiller (v1.2)
 
 **Plugin Moodle — Remplisseur de Notes dans un Tableur**
 
-- **Date de rédaction :** 27 février 2026
+- **Date de rédaction :** 28 février 2026
 - **Compatible avec :** Moodle 4.3+
 
 ---

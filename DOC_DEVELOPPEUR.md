@@ -1,10 +1,10 @@
-# Documentation Développeur — local_gradefiller (v1.0.0-alpha)
+# Documentation Développeur — local_gradefiller (v1.2)
 
 **Plugin Moodle — Remplisseur de Notes dans un Tableur**
 
-- **Date de rédaction :** 27 février 2026
+- **Date de rédaction :** 28 février 2026
 - **Composant :** local_gradefiller
-- **Version :** 2026010400
+- **Version :** 2026022800
 - **Moodle requis :** 4.3+ (2023100900)
 - **Maturité :** MATURITY_ALPHA
 
@@ -662,13 +662,22 @@ Dans `version.php`, incrémenter `$plugin->version`.
 
 | ID | Description |
 |---|---|
-| **L1** | **Écriture limitée aux formats ZIP** — La méthode `write_grades()` utilise `ZipArchive` et ne supporte que les formats basés sur ZIP (xlsx, xlsm). Les formats xls (binaire) et csv (texte) échoueront à l'écriture malgré leur acceptation dans le formulaire. |
+| **L1** | **Écriture limitée aux formats ZIP** — La méthode `write_grades()` utilise `ZipArchive` et ne supporte que les formats basés sur ZIP (xlsx, xlsm). ~~Les formats xls/csv échouaient silencieusement~~ → **Corrigé en v1.2** : une validation rejette désormais les formats non supportés avec un message d'erreur clair. |
 | **L2** | **Pas d'auto-découverte des formats/drivers** — Les formats et drivers sont enregistrés manuellement dans le manager. Un système d'auto-découverte (scan des fichiers `format_*.php` et `grade_source_*.php`) est prévu. |
 | **L3** | **`grade_source_anonymousgrader` non enregistré** — Le driver est implémenté mais n'est pas ajouté dans `manager::get_available_drivers()`. Il faut l'ajouter manuellement. |
 | **L4** | **Pas de table de base de données propre** — Le plugin n'a pas de tables propres dans `db/install.xml`. Aucun historique de traitement n'est conservé. |
 | **L5** | **Pas de tests unitaires** — Aucun test PHPUnit n'est fourni. |
-| **L6** | **Structure XML ODS différente** — La méthode `write_grades()` cible `xl/worksheets/sheet1.xml` (format Excel). Pour ODS, le fichier XML principal est `content.xml` avec un namespace différent. L'écriture ODS peut échouer. |
+| **L6** | **Structure XML ODS différente** — La méthode `write_grades()` cible `xl/worksheets/sheet1.xml` (format Excel). Pour ODS, le fichier XML principal est `content.xml` avec un namespace différent. L'écriture ODS est désormais rejetée en amont (voir L1). |
 | **L7** | **Pas de gestion des cellules inexistantes** — Si une cellule `E{row}` n'existe pas dans le XML (ligne vide), la note n'est pas écrite. Le code ne crée pas la structure `row/cell` nécessaire. |
+
+### 11.2 Corrections apportées en v1.2
+
+| Fix | Description |
+|---|---|
+| **F1** | **Fuite de fichier temporaire** — Le fichier uploadé original restait sur le serveur après un traitement réussi. Il est désormais supprimé systématiquement. |
+| **F2** | **Collisions de noms de fichiers** — Les fichiers temporaires utilisaient le nom fourni par l'utilisateur et `time()` (granularité 1s). Remplacé par `uniqid('', true)` pour éviter les conflits en accès concurrent. |
+| **F3** | **Validation du format avant écriture** — Les formats `.xls`, `.ods` et `.csv` sont désormais rejetés avec un message d'erreur explicite avant le traitement, au lieu d'échouer sur `ZipArchive`. |
+| **F4** | **Chaînes de langue manquantes** — Ajout de `invalidaction` et `error_unsupported_write_format` dans les fichiers EN et FR. |
 
 ### 11.2 Pistes d'amélioration
 
@@ -682,7 +691,7 @@ Dans `version.php`, incrémenter `$plugin->version`.
 | **A6** | Ajouter un système de logging/audit avec table d'historisation. |
 | **A7** | Support multi-feuilles (choix de la feuille de calcul à traiter). |
 | **A8** | Ajouter une fonctionnalité de preview avant la génération du fichier final. |
-| **A9** | Restreindre le formulaire aux formats supportés en écriture (.xlsx et .xlsm uniquement). |
+| **A9** | ~~Restreindre le formulaire aux formats supportés en écriture~~ → **Résolu en v1.2** : la validation côté serveur rejette les formats non supportés. |
 
 ---
 

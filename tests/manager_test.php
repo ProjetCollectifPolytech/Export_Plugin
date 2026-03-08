@@ -164,7 +164,7 @@ class manager_test extends \advanced_testcase {
         $assign = $this->getDataGenerator()->create_module('assign', ['course' => $this->course->id]);
         $cm = get_coursemodule_from_instance('assign', $assign->id);
 
-        // grade_grade does not exist yet → must return null.
+        // The grade_grade record does not exist yet — must return null.
         $result = $this->manager->fetch_grade('STU-NOGRADE', $cm->id, $this->course->id, 'standard');
         $this->assertNull($result);
     }

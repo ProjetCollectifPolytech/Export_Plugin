@@ -42,9 +42,7 @@ class source_grade_source_anonymousgrader_test extends \advanced_testcase {
         $this->driver = new grade_source_anonymousgrader();
     }
 
-    // -----------------------------------------------------------------------
-    // get_name tests
-    // -----------------------------------------------------------------------
+    // Tests for get_name.
 
     /**
      * get_name returns a non-empty string identifier for this driver.
@@ -57,9 +55,7 @@ class source_grade_source_anonymousgrader_test extends \advanced_testcase {
         $this->assertNotEmpty($name);
     }
 
-    // -----------------------------------------------------------------------
-    // supports() tests
-    // -----------------------------------------------------------------------
+    // Tests for supports.
 
     /**
      * supports() must return false when the local_anonymousgrader_exam table is absent.
@@ -145,9 +141,7 @@ class source_grade_source_anonymousgrader_test extends \advanced_testcase {
         $this->assertFalse($this->driver->supports($cm));
     }
 
-    // -----------------------------------------------------------------------
-    // is_anonymous_identifier() tests
-    // -----------------------------------------------------------------------
+    // Tests for is_anonymous_identifier.
 
     /**
      * is_anonymous_identifier returns true for purely numeric strings.
@@ -156,7 +150,7 @@ class source_grade_source_anonymousgrader_test extends \advanced_testcase {
      */
     public function test_is_anonymous_identifier_returns_true_for_numeric_string(): void {
         $this->assertTrue($this->driver->is_anonymous_identifier('123'));
-        $this->assertTrue($this->driver->is_anonymous_identifier('  456  ')); // trim is applied.
+        $this->assertTrue($this->driver->is_anonymous_identifier('  456  ')); // Trim is applied.
         $this->assertTrue($this->driver->is_anonymous_identifier('0'));
     }
 

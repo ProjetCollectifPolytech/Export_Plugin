@@ -41,7 +41,6 @@ require_once($CFG->libdir . '/gradelib.php');
  * @package    local_gradefiller
  */
 class manager {
-
     /** @var array Cache of available spreadsheet formats */
     private $formats = null;
 
@@ -63,7 +62,7 @@ class manager {
         // Register built-in formats.
         $this->formats[] = new \local_gradefiller\spreadsheet\format_university_standard();
 
-        // TODO: Add auto-discovery of additional formats from /local/gradefiller/classes/spreadsheet/format_*.php
+        // Auto-discovery of additional formats can be added here.
 
         return $this->formats;
     }
@@ -101,7 +100,7 @@ class manager {
         // Register built-in drivers.
         $this->drivers[] = new \local_gradefiller\source\grade_source_offlinequiz();
 
-        // TODO: Add auto-discovery of additional drivers from /local/gradefiller/classes/source/grade_source_*.php
+        // Auto-discovery of additional drivers can be added here.
 
         return $this->drivers;
     }
@@ -186,7 +185,7 @@ class manager {
             'itemtype' => 'mod',
             'itemmodule' => $cm->modname,
             'iteminstance' => $cm->instance,
-            'courseid' => $courseid
+            'courseid' => $courseid,
         ]);
 
         if (!$gradeitem) {

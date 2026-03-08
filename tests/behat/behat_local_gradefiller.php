@@ -33,7 +33,6 @@ use Behat\Gherkin\Node\TableNode;
  * Step definitions for local_gradefiller Behat tests.
  */
 class behat_local_gradefiller extends behat_base {
-
     /**
      * Navigate to the grade filler page for a specific activity in a course.
      *

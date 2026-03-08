@@ -42,9 +42,7 @@ class format_university_standard_test extends \advanced_testcase {
         $this->format = new format_university_standard();
     }
 
-    // -----------------------------------------------------------------------
-    // Simple getter tests (no PhpSpreadsheet required)
-    // -----------------------------------------------------------------------
+    // Simple getter tests (no PhpSpreadsheet required).
 
     /**
      * get_key returns exactly 'university_standard'.
@@ -77,9 +75,7 @@ class format_university_standard_test extends \advanced_testcase {
         $this->assertNotEmpty($description);
     }
 
-    // -----------------------------------------------------------------------
-    // File-dependent tests (require PhpSpreadsheet)
-    // -----------------------------------------------------------------------
+    // File-dependent tests (require PhpSpreadsheet).
 
     /**
      * Returns whether PhpSpreadsheet is available in this Moodle installation.

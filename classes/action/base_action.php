@@ -24,8 +24,6 @@
 
 namespace local_gradefiller\action;
 
-defined('MOODLE_INTERNAL') || die();
-
 use context_module;
 use local_gradefiller\manager;
 use moodle_url;
@@ -37,7 +35,6 @@ use moodle_url;
  * authentication, context setup, and manager instantiation.
  */
 abstract class base_action {
-
     /** @var int Course module ID */
     protected $cmid;
 

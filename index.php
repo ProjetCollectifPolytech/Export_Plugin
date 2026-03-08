@@ -50,7 +50,7 @@ $PAGE->requires->css('/local/gradefiller/styles.css');
 // Handle actions via action handlers.
 if ($action && $_SERVER['REQUEST_METHOD'] === 'POST' && confirm_sesskey()) {
     $actionclass = "\\local_gradefiller\\action\\{$action}";
-    
+
     if (class_exists($actionclass)) {
         $handler = new $actionclass($cmid);
         $handler->execute();

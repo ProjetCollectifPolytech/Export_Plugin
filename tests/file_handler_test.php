@@ -33,15 +33,12 @@ use local_gradefiller\util\file_handler;
  * @covers \local_gradefiller\util\file_handler
  */
 class file_handler_test extends \advanced_testcase {
-
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest(true);
     }
 
-    // -----------------------------------------------------------------------
-    // validate_extension tests
-    // -----------------------------------------------------------------------
+    // Tests for validate_extension.
 
     /**
      * validate_extension returns true for extensions present in the allowed list.
@@ -112,9 +109,7 @@ class file_handler_test extends \advanced_testcase {
         $this->assertFalse(file_handler::validate_extension('grades', $allowed));
     }
 
-    // -----------------------------------------------------------------------
-    // cleanup tests
-    // -----------------------------------------------------------------------
+    // Tests for cleanup.
 
     /**
      * cleanup removes an existing file from the filesystem.

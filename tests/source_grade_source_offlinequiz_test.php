@@ -42,9 +42,7 @@ class source_grade_source_offlinequiz_test extends \advanced_testcase {
         $this->driver = new grade_source_offlinequiz();
     }
 
-    // -----------------------------------------------------------------------
-    // get_name tests
-    // -----------------------------------------------------------------------
+    // Tests for get_name.
 
     /**
      * get_name returns a non-empty string identifier for this driver.
@@ -57,9 +55,7 @@ class source_grade_source_offlinequiz_test extends \advanced_testcase {
         $this->assertNotEmpty($name);
     }
 
-    // -----------------------------------------------------------------------
-    // supports() tests
-    // -----------------------------------------------------------------------
+    // Tests for supports.
 
     /**
      * supports() must return true for offlinequiz course modules.
@@ -95,9 +91,7 @@ class source_grade_source_offlinequiz_test extends \advanced_testcase {
         ];
     }
 
-    // -----------------------------------------------------------------------
-    // is_anonymous_identifier() tests
-    // -----------------------------------------------------------------------
+    // Tests for is_anonymous_identifier.
 
     /**
      * is_anonymous_identifier returns true for any non-empty, non-whitespace-only string.
@@ -128,9 +122,7 @@ class source_grade_source_offlinequiz_test extends \advanced_testcase {
         $this->assertFalse($this->driver->is_anonymous_identifier('   '));
     }
 
-    // -----------------------------------------------------------------------
-    // fetch_grade_by_anonkey() tests
-    // -----------------------------------------------------------------------
+    // Tests for fetch_grade_by_anonkey.
 
     /**
      * fetch_grade_by_anonkey throws a dml_exception when the offlinequiz table is absent.
@@ -147,7 +139,7 @@ class source_grade_source_offlinequiz_test extends \advanced_testcase {
 
         $this->expectException(\dml_exception::class);
 
-        // cmid=1 will fail at get_coursemodule_from_id if the table is missing.
+        // This will fail at get_coursemodule_from_id if the offlinequiz table is absent.
         $this->driver->fetch_grade_by_anonkey(1, 'KEY-001');
     }
 }

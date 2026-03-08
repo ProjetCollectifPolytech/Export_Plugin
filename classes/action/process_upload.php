@@ -24,8 +24,6 @@
 
 namespace local_gradefiller\action;
 
-defined('MOODLE_INTERNAL') || die();
-
 use local_gradefiller\util\file_handler;
 use local_gradefiller\util\download_handler;
 
@@ -38,7 +36,6 @@ use local_gradefiller\util\download_handler;
  * 3. Sends the filled spreadsheet for download
  */
 class process_upload extends base_action {
-
     /**
      * Execute the upload processing action
      *
@@ -85,7 +82,6 @@ class process_upload extends base_action {
 
             // Send file for download (this terminates execution).
             download_handler::send_file($result['filepath'], $downloadname);
-
         } catch (\Exception $e) {
             // Cleanup on error.
             if ($tempfile && file_exists($tempfile)) {

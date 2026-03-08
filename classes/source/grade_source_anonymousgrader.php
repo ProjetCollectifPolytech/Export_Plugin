@@ -26,8 +26,6 @@
 
 namespace local_gradefiller\source;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Anonymous Grader driver implementation
  *
@@ -36,7 +34,6 @@ defined('MOODLE_INTERNAL') || die();
  * @package    local_gradefiller
  */
 class grade_source_anonymousgrader implements grade_source_interface {
-
     /**
      * Get the human-readable name of this driver
      *
@@ -80,7 +77,7 @@ class grade_source_anonymousgrader implements grade_source_interface {
 
         // Get the offlinequiz instance ID.
         $cm = get_coursemodule_from_id('offlinequiz', $cmid, 0, false, MUST_EXIST);
-        
+
         // Find the exam record.
         $exam = $DB->get_record('local_anonymousgrader_exam', ['offlinequizid' => $cm->instance], '*', MUST_EXIST);
 
@@ -92,7 +89,7 @@ class grade_source_anonymousgrader implements grade_source_interface {
                   AND r.anonymousid = :anonid
                   AND r.status = 'validated'
                 ORDER BY r.timemodified DESC";
-        
+
         $params = [
             'examid' => $exam->id,
             'anonid' => (int)$anonkey,

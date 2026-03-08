@@ -33,7 +33,6 @@ use local_gradefiller\util\download_handler;
  * @covers \local_gradefiller\util\download_handler
  */
 class download_handler_test extends \advanced_testcase {
-
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest(true);

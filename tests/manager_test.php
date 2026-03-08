@@ -51,9 +51,7 @@ class manager_test extends \advanced_testcase {
         $this->manager = new manager();
     }
 
-    // -----------------------------------------------------------------------
-    // Format discovery tests
-    // -----------------------------------------------------------------------
+    // Format discovery tests.
 
     /**
      * get_available_formats returns at least one format.
@@ -87,9 +85,7 @@ class manager_test extends \advanced_testcase {
         $this->assertNull($format);
     }
 
-    // -----------------------------------------------------------------------
-    // Driver discovery tests
-    // -----------------------------------------------------------------------
+    // Driver discovery tests.
 
     /**
      * get_available_drivers returns at least one driver.
@@ -125,9 +121,7 @@ class manager_test extends \advanced_testcase {
         $this->assertNull($driver);
     }
 
-    // -----------------------------------------------------------------------
-    // fetch_grade — standard source tests (requires real DB setup)
-    // -----------------------------------------------------------------------
+    // Standard source fetch_grade tests.
 
     /**
      * fetch_grade with 'standard' source returns null when the idnumber is unknown.
@@ -216,9 +210,7 @@ class manager_test extends \advanced_testcase {
         $this->assertEquals($student->id, $result->userid);
     }
 
-    // -----------------------------------------------------------------------
-    // fetch_grade — anonymous source tests
-    // -----------------------------------------------------------------------
+    // Anonymous source fetch_grade tests.
 
     /**
      * fetch_grade with 'anonymous' source returns null when no driver matches the cm.
@@ -234,9 +226,7 @@ class manager_test extends \advanced_testcase {
         $this->assertNull($result);
     }
 
-    // -----------------------------------------------------------------------
-    // fetch_grade — unknown source
-    // -----------------------------------------------------------------------
+    // Unknown source fetch_grade tests.
 
     /**
      * fetch_grade returns null for an unrecognised grade source string.
@@ -249,9 +239,7 @@ class manager_test extends \advanced_testcase {
         $this->assertNull($result);
     }
 
-    // -----------------------------------------------------------------------
-    // process_file tests
-    // -----------------------------------------------------------------------
+    // Tests for process_file.
 
     /**
      * process_file throws a moodle_exception when the format key is not found.

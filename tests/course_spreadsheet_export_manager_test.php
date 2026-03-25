@@ -94,6 +94,32 @@ final class course_spreadsheet_export_manager_test extends gradefiller_testcase 
         $this->assertStringEndsWith('.xlsm', $format->get_last_outputfile());
     }
 
+    public function test_process_export_ignores_missing_activity_grades_in_average(): void {
+        [$course, $student, $itemone, $itemtwo] = $this->create_partial_gradebook_fixture();
+
+        $format = $this->create_fake_spreadsheet_format([
+            ['identifier' => 'S-003', 'row_number' => 18],
+        ]);
+
+        $result = (new course_spreadsheet_export_manager())->process_export(
+            $this->create_temp_template('xlsx'),
+            $format,
+            $course,
+            0,
+            (object) [
+                'itemids' => [$itemone->id => 1, $itemtwo->id => 1],
+                'export_onlyactive' => 1,
+                'decimals' => 2,
+            ],
+            'apogee_template.xlsx'
+        );
+
+        $this->assertSame(1, $result['stats']['matched']);
+        $writtengrades = $format->get_written_grades();
+        $this->assertCount(1, $writtengrades);
+        $this->assertSame(13.0, $this->find_written_grade($writtengrades, 'S-003')->grade);
+    }
+
     /**
      * Create two enrolled students and two graded activities.
      *
@@ -121,6 +147,30 @@ final class course_spreadsheet_export_manager_test extends gradefiller_testcase 
         $this->assign_grade_to_item($itemtwo, $studentb->id, 8.0);
 
         return [$course, $studenta, $studentb, $itemone, $itemtwo];
+    }
+
+    /**
+     * Create one enrolled student with a grade on only one selected activity.
+     *
+     * @return array
+     */
+    private function create_partial_gradebook_fixture(): array {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+
+        $student = $this->getDataGenerator()->create_user(['idnumber' => 'S-003']);
+        $this->getDataGenerator()->enrol_user($student->id, $course->id, 'student');
+
+        $cmone = $this->create_label_cm($course);
+        $itemone = $this->create_grade_item_for_cm($course, $cmone);
+        $cmtwo = $this->create_label_cm($course);
+        $itemtwo = $this->create_grade_item_for_cm($course, $cmtwo);
+
+        $this->assign_grade_to_item($itemone, $student->id, 13.0);
+
+        return [$course, $student, $itemone, $itemtwo];
     }
 
     /**

@@ -15,17 +15,31 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information for local_gradefiller
+ * Optional override for multi-activity grade aggregation in spreadsheet exports.
  *
  * @package    local_gradefiller
  * @copyright  2026
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+namespace local_gradefiller\spreadsheet;
+
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'local_gradefiller';
-$plugin->version = 2026032502;  // YYYYMMDDXX.
-$plugin->requires = 2023100900; // Moodle 4.3+.
-$plugin->maturity = MATURITY_ALPHA;
-$plugin->release = 'v1.2.0-alpha';
+/**
+ * Allows a spreadsheet format to override the default multi-activity
+ * aggregation strategy used by course exports.
+ *
+ * @package    local_gradefiller
+ */
+interface multi_activity_grade_aggregation_interface {
+
+    /**
+     * Aggregate the grades collected for one identifier.
+     *
+     * @param array $grades Array of grade entry objects
+     * @param object $context Additional export context
+     * @return float|null
+     */
+    public function aggregate_multi_activity_grades(array $grades, object $context): ?float;
+}

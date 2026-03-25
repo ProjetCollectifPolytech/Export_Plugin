@@ -89,6 +89,44 @@ class format_university_standard implements spreadsheet_format_interface {
     }
 
     /**
+     * Get the file extensions supported by this spreadsheet format.
+     *
+     * @return string[]
+     */
+    public function get_supported_extensions(): array {
+        return self::ALLOWED_EXTENSIONS;
+    }
+
+    /**
+     * Get the upload field label for this spreadsheet format.
+     *
+     * @return string
+     */
+    public function get_upload_label(): string {
+        return $this->get_name();
+    }
+
+    /**
+     * Get the descriptive upload help for this spreadsheet format.
+     *
+     * @return string
+     */
+    public function get_upload_help(): string {
+        return $this->get_description();
+    }
+
+    /**
+     * Course grade exports may combine standard gradebook items and anonymous
+     * activity-backed items, so Apogee prefers automatic identifier
+     * resolution in the multi-activity pipeline.
+     *
+     * @return string
+     */
+    public function get_identifier_mode(): string {
+        return self::IDENTIFIER_MODE_AUTO;
+    }
+
+    /**
      * Read identifiers from the spreadsheet
      *
      * @param string $filepath Path to the uploaded spreadsheet file
@@ -100,11 +138,12 @@ class format_university_standard implements spreadsheet_format_interface {
             $spreadsheet = IOFactory::load($filepath);
             $sheet = $spreadsheet->getActiveSheet();
             $highestRow = $sheet->getHighestRow();
+            $identifiercolumn = $this->resolve_identifier_column($sheet, $highestRow);
 
             $identifiers = [];
             for ($row = self::HEADER_ROWS + 1; $row <= $highestRow; $row++) {
                 $identifier = $sheet->getCellByColumnAndRow(
-                    self::COLUMN_IDENTIFIER + 1, 
+                    $identifiercolumn + 1,
                     $row
                 )->getValue();
 
@@ -246,6 +285,7 @@ class format_university_standard implements spreadsheet_format_interface {
             $spreadsheet = IOFactory::load($filepath);
             $sheet = $spreadsheet->getActiveSheet();
             $highestRow = $sheet->getHighestRow();
+            $identifiercolumn = $this->resolve_identifier_column($sheet, $highestRow);
 
             // Check if there are enough rows.
             if ($highestRow <= self::HEADER_ROWS) {
@@ -260,7 +300,7 @@ class format_university_standard implements spreadsheet_format_interface {
             // Check if column A has data after header rows.
             $hasdata = false;
             for ($row = self::HEADER_ROWS + 1; $row <= min($highestRow, self::HEADER_ROWS + 10); $row++) {
-                $value = $sheet->getCellByColumnAndRow(self::COLUMN_IDENTIFIER + 1, $row)->getValue();
+                $value = $sheet->getCellByColumnAndRow($identifiercolumn + 1, $row)->getValue();
                 if (!empty(trim($value))) {
                     $hasdata = true;
                     break;
@@ -294,5 +334,63 @@ class format_university_standard implements spreadsheet_format_interface {
         }
 
         return $extension;
+    }
+
+    /**
+     * Resolve the identifier column used by the spreadsheet.
+     *
+     * Apogee files usually store the identifier in column A, but some exports
+     * place the effective identifier values in another early column while
+     * keeping the same note column. We therefore keep column A as the preferred
+     * target and gracefully fall back to the first populated metadata column.
+     *
+     * @param \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet
+     * @param int $highestrow
+     * @return int
+     */
+    private function resolve_identifier_column(
+        \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet,
+        int $highestrow
+    ): int {
+        if ($this->count_identifier_candidates($sheet, self::COLUMN_IDENTIFIER, $highestrow) > 0) {
+            return self::COLUMN_IDENTIFIER;
+        }
+
+        $bestcolumn = self::COLUMN_IDENTIFIER;
+        $bestscore = 0;
+        foreach ([0, 1, 2, 3] as $candidate) {
+            $score = $this->count_identifier_candidates($sheet, $candidate, $highestrow);
+            if ($score > $bestscore) {
+                $bestcolumn = $candidate;
+                $bestscore = $score;
+            }
+        }
+
+        return $bestcolumn;
+    }
+
+    /**
+     * Count the non-empty identifier-like cells in the first data rows.
+     *
+     * @param \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet
+     * @param int $columnindex Zero-based column index
+     * @param int $highestrow
+     * @return int
+     */
+    private function count_identifier_candidates(
+        \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet,
+        int $columnindex,
+        int $highestrow
+    ): int {
+        $score = 0;
+        $endrow = min($highestrow, self::HEADER_ROWS + 25);
+        for ($row = self::HEADER_ROWS + 1; $row <= $endrow; $row++) {
+            $value = trim((string) $sheet->getCellByColumnAndRow($columnindex + 1, $row)->getFormattedValue());
+            if ($value !== '') {
+                $score++;
+            }
+        }
+
+        return $score;
     }
 }

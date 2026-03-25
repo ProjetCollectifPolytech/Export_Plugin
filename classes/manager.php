@@ -201,6 +201,51 @@ class manager {
     }
 
     /**
+     * Fetch a grade for one specific grade item.
+     *
+     * This additive helper powers the multi-activity spreadsheet export without
+     * changing the historical activity-by-activity workflow.
+     *
+     * @param string $identifier Identifier read from the spreadsheet
+     * @param grade_item $gradeitem Selected grade item
+     * @param int $courseid Course ID
+     * @param string $identifiermode Preferred identifier resolution strategy
+     * @param bool $onlyactive Whether to require active enrolment
+     * @param int $groupid Group filter (0 = no filter)
+     * @return object|null
+     */
+    public function fetch_grade_for_item(
+        string $identifier,
+        grade_item $gradeitem,
+        int $courseid,
+        string $identifiermode = spreadsheet_format_interface::IDENTIFIER_MODE_AUTO,
+        bool $onlyactive = true,
+        int $groupid = 0
+    ): ?object {
+        $identifier = trim($identifier);
+
+        $preferanonymous = ($identifiermode === spreadsheet_format_interface::IDENTIFIER_MODE_ANONYMOUS);
+        $preferstandard = ($identifiermode === spreadsheet_format_interface::IDENTIFIER_MODE_STANDARD);
+
+        if ($preferstandard) {
+            return $this->fetch_grade_from_standard_item($identifier, $gradeitem, $courseid, $onlyactive, $groupid);
+        }
+
+        if ($gradeitem->itemtype === 'mod') {
+            $anonymousgrade = $this->fetch_grade_from_anonymous_item($identifier, $gradeitem, $courseid);
+            if ($anonymousgrade !== null) {
+                return $anonymousgrade;
+            }
+
+            if ($preferanonymous) {
+                return null;
+            }
+        }
+
+        return $this->fetch_grade_from_standard_item($identifier, $gradeitem, $courseid, $onlyactive, $groupid);
+    }
+
+    /**
      * Fetch grade from standard Moodle gradebook using user idnumber
      *
      * @param string $idnumber User ID number
@@ -209,20 +254,6 @@ class manager {
      * @return object|null Object with properties: grade, maxgrade, userid, source
      */
     private function fetch_grade_from_standard(string $idnumber, int $cmid, int $courseid): ?object {
-        global $DB;
-
-        // Find user by idnumber.
-        $user = $DB->get_record('user', ['idnumber' => $idnumber, 'deleted' => 0]);
-        if (!$user) {
-            return null;
-        }
-
-        // Check if user is enrolled in the course.
-        $context = context_course::instance($courseid);
-        if (!is_enrolled($context, $user->id)) {
-            return null;
-        }
-
         // Get course module info.
         $cm = get_coursemodule_from_id('', $cmid, 0, false, MUST_EXIST);
 
@@ -238,19 +269,7 @@ class manager {
             return null;
         }
 
-        // Get grade.
-        $grade = grade_grade::fetch(['itemid' => $gradeitem->id, 'userid' => $user->id]);
-
-        if ($grade && $grade->finalgrade !== null) {
-            return (object)[
-                'grade' => $grade->finalgrade,
-                'maxgrade' => $gradeitem->grademax,
-                'userid' => $user->id,
-                'source' => 'standard',
-            ];
-        }
-
-        return null;
+        return $this->fetch_grade_from_standard_item($idnumber, $gradeitem, $courseid, false, 0);
     }
 
     /**
@@ -284,6 +303,93 @@ class manager {
         }
 
         return null;
+    }
+
+    /**
+     * Fetch a standard Moodle grade for an already resolved grade item.
+     *
+     * @param string $idnumber User idnumber
+     * @param grade_item $gradeitem Grade item
+     * @param int $courseid Course ID
+     * @param bool $onlyactive Whether to require active enrolment
+     * @param int $groupid Group filter (0 = no filter)
+     * @return object|null
+     */
+    private function fetch_grade_from_standard_item(
+        string $idnumber,
+        grade_item $gradeitem,
+        int $courseid,
+        bool $onlyactive,
+        int $groupid
+    ): ?object {
+        global $DB;
+
+        $user = $DB->get_record('user', ['idnumber' => $idnumber, 'deleted' => 0]);
+        if (!$user) {
+            return null;
+        }
+
+        $context = context_course::instance($courseid);
+        if (!is_enrolled($context, $user->id, '', $onlyactive)) {
+            return null;
+        }
+
+        if ($groupid > 0 && !groups_is_member($groupid, $user->id)) {
+            return null;
+        }
+
+        $grade = grade_grade::fetch(['itemid' => $gradeitem->id, 'userid' => $user->id]);
+        if ($grade && $grade->finalgrade !== null) {
+            return (object) [
+                'grade' => (float) $grade->finalgrade,
+                'maxgrade' => (float) $gradeitem->grademax,
+                'userid' => $user->id,
+                'source' => 'standard',
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * Fetch an anonymous grade for an already resolved grade item.
+     *
+     * @param string $anonkey Anonymous identifier
+     * @param grade_item $gradeitem Grade item
+     * @param int $courseid Course ID
+     * @return object|null
+     */
+    private function fetch_grade_from_anonymous_item(
+        string $anonkey,
+        grade_item $gradeitem,
+        int $courseid
+    ): ?object {
+        if ($gradeitem->itemtype !== 'mod' || empty($gradeitem->itemmodule) || empty($gradeitem->iteminstance)) {
+            return null;
+        }
+
+        $cm = get_coursemodule_from_instance(
+            $gradeitem->itemmodule,
+            $gradeitem->iteminstance,
+            $courseid,
+            false,
+            IGNORE_MISSING
+        );
+        if (!$cm) {
+            return null;
+        }
+
+        $driver = $this->get_driver_for_cm($cm);
+        if (!$driver || !$driver->is_anonymous_identifier($anonkey)) {
+            return null;
+        }
+
+        $result = $driver->fetch_grade_by_anonkey($cm->id, $anonkey);
+        if ($result !== null) {
+            $result->source = 'anonymous';
+        }
+
+        return $result;
     }
 
     /**

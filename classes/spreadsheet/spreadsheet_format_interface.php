@@ -35,6 +35,14 @@ namespace local_gradefiller\spreadsheet;
  * @package    local_gradefiller
  */
 interface spreadsheet_format_interface {
+    /** @var string Prefer automatic identifier resolution */
+    public const IDENTIFIER_MODE_AUTO = 'auto';
+
+    /** @var string Prefer Moodle idnumber resolution */
+    public const IDENTIFIER_MODE_STANDARD = 'standard';
+
+    /** @var string Prefer anonymous activity-specific identifiers */
+    public const IDENTIFIER_MODE_ANONYMOUS = 'anonymous';
 
     /**
      * Get the human-readable name of this format
@@ -56,6 +64,39 @@ interface spreadsheet_format_interface {
      * @return string Format description
      */
     public function get_description(): string;
+
+    /**
+     * Get the file extensions accepted by this spreadsheet format.
+     *
+     * Returned values must not include the leading dot.
+     *
+     * @return string[]
+     */
+    public function get_supported_extensions(): array;
+
+    /**
+     * Get the label to display for the upload field when this spreadsheet
+     * format is selected in the UI.
+     *
+     * @return string
+     */
+    public function get_upload_label(): string;
+
+    /**
+     * Get the descriptive help text to display for this spreadsheet format in
+     * the upload UI.
+     *
+     * @return string
+     */
+    public function get_upload_help(): string;
+
+    /**
+     * Describe how identifiers in this spreadsheet should be interpreted when
+     * resolving grades.
+     *
+     * @return string One of the IDENTIFIER_MODE_* constants
+     */
+    public function get_identifier_mode(): string;
 
     /**
      * Read identifiers from the spreadsheet

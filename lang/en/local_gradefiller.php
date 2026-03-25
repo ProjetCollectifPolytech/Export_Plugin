@@ -43,6 +43,7 @@ $string['page_title'] = 'Fill Grades in a Spreadsheet';
 $string['gradebook_export_page_title'] = 'Export grades with Grade Filler';
 $string['gradebook_export_section'] = 'Grade Filler template';
 $string['gradebook_export_intro'] = 'Keep Moodle\'s native grade export options, then inject the result into your workbook template.';
+$string['gradebook_export_target_spreadsheet'] = 'Target spreadsheet format';
 $string['activity_info'] = 'Activity Information';
 $string['activity'] = 'Activity';
 $string['type'] = 'Type';

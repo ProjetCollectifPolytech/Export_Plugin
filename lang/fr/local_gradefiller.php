@@ -43,6 +43,7 @@ $string['page_title'] = 'Remplir les notes dans un tableur';
 $string['gradebook_export_page_title'] = 'Exporter les notes avec Grade Filler';
 $string['gradebook_export_section'] = 'Template Grade Filler';
 $string['gradebook_export_intro'] = 'Conservez les options natives d\'export Moodle, puis injectez le résultat dans votre classeur modèle.';
+$string['gradebook_export_target_spreadsheet'] = 'Format du tableur cible';
 $string['activity_info'] = 'Informations sur l\'activité';
 $string['activity'] = 'Activité';
 $string['type'] = 'Type';

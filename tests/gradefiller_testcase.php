@@ -211,9 +211,11 @@ abstract class gradefiller_testcase extends \advanced_testcase {
         ]);
 
         if ($anonkey !== null) {
+            $group = $DB->get_record('offlinequiz_groups', ['id' => $groupid], 'groupnumber', MUST_EXIST);
+
             $DB->insert_record('offlinequiz_scanned_pages', (object)[
                 'offlinequizid' => $offlinequizid,
-                'groupnumber' => $groupid,
+                'groupnumber' => $group->groupnumber,
                 'userkey' => $anonkey,
                 'resultid' => $resultid,
                 'status' => 'ok',

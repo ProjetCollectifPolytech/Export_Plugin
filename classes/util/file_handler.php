@@ -24,12 +24,15 @@
 
 namespace local_gradefiller\util;
 
+defined('MOODLE_INTERNAL') || die();
+
 /**
  * File handler utility class
  *
  * Handles file upload and temporary file management.
  */
 class file_handler {
+
     /**
      * Handle uploaded file
      *
@@ -48,7 +51,7 @@ class file_handler {
         // Move uploaded file to temp directory.
         $tempdir = make_temp_directory('gradefiller');
         $tempfile = $tempdir . '/' . clean_filename($_FILES[$filekey]['name']);
-
+        
         if (!move_uploaded_file($_FILES[$filekey]['tmp_name'], $tempfile)) {
             throw new \moodle_exception('error_moving_file', 'local_gradefiller');
         }

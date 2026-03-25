@@ -36,6 +36,7 @@ namespace local_gradefiller\source;
  * @package    local_gradefiller
  */
 interface grade_source_interface {
+
     /**
      * Get the human-readable name of this driver
      *

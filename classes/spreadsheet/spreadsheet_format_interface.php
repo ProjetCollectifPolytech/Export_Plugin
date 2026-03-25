@@ -35,6 +35,7 @@ namespace local_gradefiller\spreadsheet;
  * @package    local_gradefiller
  */
 interface spreadsheet_format_interface {
+
     /**
      * Get the human-readable name of this format
      *

@@ -25,6 +25,28 @@
 defined('MOODLE_INTERNAL') || die();
 
 $capabilities = [
+    'local/gradefiller:view' => [
+        'riskbitmask' => RISK_PERSONAL,
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => [
+            'teacher' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+        ],
+        'clonepermissionsfrom' => 'local/gradefiller:use',
+    ],
+    'local/gradefiller:process' => [
+        'riskbitmask' => RISK_PERSONAL,
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => [
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+        ],
+        'clonepermissionsfrom' => 'local/gradefiller:use',
+    ],
+    // Legacy capability kept for backward compatibility with existing role overrides.
     'local/gradefiller:use' => [
         'riskbitmask' => RISK_SPAM | RISK_PERSONAL | RISK_XSS,
         'captype' => 'write',

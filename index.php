@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Grade Filler - Main interface
+ * Grade Filler main interface.
  *
  * @package    local_gradefiller
  * @copyright  2026
@@ -23,23 +23,26 @@
  */
 
 require_once(__DIR__ . '/../../config.php');
+require_once(__DIR__ . '/lib.php');
 
 use local_gradefiller\manager;
 
-// Get parameters.
 $cmid = required_param('id', PARAM_INT);
 $action = optional_param('action', '', PARAM_ALPHANUMEXT);
+$actionmap = [
+    'process_upload' => \local_gradefiller\action\process_upload::class,
+];
 
-// Get course module and course.
 $cm = get_coursemodule_from_id('', $cmid, 0, false, MUST_EXIST);
 $course = $DB->get_record('course', ['id' => $cm->course], '*', MUST_EXIST);
 $context = context_module::instance($cm->id);
+$coursecontext = context_course::instance($course->id);
 
-// Security checks.
 require_login($course, false, $cm);
-require_capability('local/gradefiller:use', $context);
+if (!local_gradefiller_user_can_view($context)) {
+    require_capability('local/gradefiller:view', $context);
+}
 
-// Page setup.
 $PAGE->set_url('/local/gradefiller/index.php', ['id' => $cmid]);
 $PAGE->set_context($context);
 $PAGE->set_pagelayout('incourse');
@@ -47,20 +50,35 @@ $PAGE->set_title(get_string('page_title', 'local_gradefiller'));
 $PAGE->set_heading($course->fullname);
 $PAGE->requires->css('/local/gradefiller/styles.css');
 
-// Handle actions via action handlers.
-if ($action && $_SERVER['REQUEST_METHOD'] === 'POST' && confirm_sesskey()) {
-    $actionclass = "\\local_gradefiller\\action\\{$action}";
+$accessdata = local_gradefiller_get_activity_access_data($cm, $coursecontext);
+if ($accessdata === null) {
+    throw new moodle_exception('error_activity_unsupported', 'local_gradefiller');
+}
 
-    if (class_exists($actionclass)) {
-        $handler = new $actionclass($cmid);
+if ($action !== '') {
+    if (!isset($actionmap[$action])) {
+        redirect(
+            new moodle_url('/local/gradefiller/index.php', ['id' => $cmid]),
+            get_string('error_invalid_action', 'local_gradefiller'),
+            null,
+            \core\output\notification::NOTIFY_ERROR
+        );
+    }
+
+    try {
+        $handler = new $actionmap[$action]($cmid);
         $handler->execute();
-        // Note: action handlers may terminate execution (e.g., for downloads).
-    } else {
-        throw new \moodle_exception('invalidaction', 'local_gradefiller');
+        redirect(new moodle_url('/local/gradefiller/index.php', ['id' => $cmid]));
+    } catch (Exception $e) {
+        redirect(
+            new moodle_url('/local/gradefiller/index.php', ['id' => $cmid]),
+            $e->getMessage(),
+            null,
+            \core\output\notification::NOTIFY_ERROR
+        );
     }
 }
 
-// Display any messages from session.
 if (isset($SESSION->gradefiller_success)) {
     \core\notification::success($SESSION->gradefiller_success);
     unset($SESSION->gradefiller_success);
@@ -70,10 +88,8 @@ if (isset($SESSION->gradefiller_error)) {
     unset($SESSION->gradefiller_error);
 }
 
-// Initialize manager.
 $manager = new manager();
-
-// Get available formats.
+$canprocess = local_gradefiller_user_can_process($context);
 $formats = $manager->get_available_formats();
 $formatoptions = [];
 foreach ($formats as $format) {
@@ -84,11 +100,19 @@ foreach ($formats as $format) {
     ];
 }
 
-// Check if activity supports anonymous grades (has a driver).
 $driver = $manager->get_driver_for_cm($cm);
 $supportsanonymous = ($driver !== null);
 
-// Prepare template data.
+\local_gradefiller\event\page_viewed::create([
+    'objectid' => $cm->id,
+    'courseid' => $course->id,
+    'context' => $context,
+    'other' => [
+        'supports_anonymous' => $supportsanonymous ? 1 : 0,
+        'can_process' => $canprocess ? 1 : 0,
+    ],
+])->trigger();
+
 $templatedata = [
     'cmid' => $cmid,
     'activity_name' => $cm->name,
@@ -96,11 +120,11 @@ $templatedata = [
     'formats' => $formatoptions,
     'supports_anonymous' => $supportsanonymous,
     'driver_name' => $supportsanonymous ? $driver->get_name() : '',
+    'can_process' => $canprocess,
     'sesskey' => sesskey(),
     'wwwroot' => $CFG->wwwroot,
 ];
 
-// Output page.
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('page_title', 'local_gradefiller'));
 echo $OUTPUT->render_from_template('local_gradefiller/upload_form', $templatedata);

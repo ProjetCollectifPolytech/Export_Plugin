@@ -14,18 +14,28 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * Version information for local_gradefiller
- *
- * @package    local_gradefiller
- * @copyright  2026
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
+namespace local_gradefiller\privacy;
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'local_gradefiller';
-$plugin->version = 2026032500;  // YYYYMMDDXX.
-$plugin->requires = 2023100900; // Moodle 4.3+.
-$plugin->maturity = MATURITY_ALPHA;
-$plugin->release = 'v1.1.0-alpha';
+/**
+ * Privacy provider for local_gradefiller implementing null_provider.
+ *
+ * Grade Filler processes uploaded files transiently and does not persist
+ * personal data in plugin-owned Moodle tables.
+ *
+ * @package    local_gradefiller
+ * @category   privacy
+ * @copyright  2026
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class provider implements \core_privacy\local\metadata\null_provider {
+    /**
+     * Explain why the plugin stores no personal data.
+     *
+     * @return string
+     */
+    public static function get_reason(): string {
+        return 'privacy:metadata';
+    }
+}

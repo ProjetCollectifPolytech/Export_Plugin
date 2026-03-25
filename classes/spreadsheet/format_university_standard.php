@@ -98,6 +98,24 @@ class format_university_standard implements spreadsheet_format_interface {
     }
 
     /**
+     * Get the upload field label for this spreadsheet format.
+     *
+     * @return string
+     */
+    public function get_upload_label(): string {
+        return $this->get_name();
+    }
+
+    /**
+     * Get the descriptive upload help for this spreadsheet format.
+     *
+     * @return string
+     */
+    public function get_upload_help(): string {
+        return $this->get_description();
+    }
+
+    /**
      * Read identifiers from the spreadsheet
      *
      * @param string $filepath Path to the uploaded spreadsheet file

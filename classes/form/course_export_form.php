@@ -133,7 +133,11 @@ class course_export_form extends \moodleform {
         );
         $mform->setDefault('decimals', $CFG->grade_export_decimalpoints);
 
-        $mform->addElement('header', 'gradefilleroptions', get_string('gradebook_export_section', 'local_gradefiller'));
+        $sectiontitle = $selectedspreadsheet !== null
+            ? $selectedspreadsheet->get_name()
+            : get_string('gradebook_export_section', 'local_gradefiller');
+
+        $mform->addElement('header', 'gradefilleroptions', $sectiontitle);
         $mform->setExpanded('gradefilleroptions', true);
 
         $formatoptions = [];
@@ -158,21 +162,16 @@ class course_export_form extends \moodleform {
             $acceptedextensions = ['.xlsx'];
         }
 
-        if ($selectedspreadsheet !== null) {
-            $selecteddetails = \html_writer::span(s($selectedspreadsheet->get_name()), 'font-weight-bold');
-            if ($selectedspreadsheet->get_description() !== '') {
-                $selecteddetails .= \html_writer::div(
-                    s($selectedspreadsheet->get_description()),
-                    'text-muted small'
-                );
-            }
-
+        if ($selectedspreadsheet !== null && $selectedspreadsheet->get_upload_help() !== '') {
             $mform->addElement(
                 'static',
-                'spreadsheetformat_display',
-                get_string('gradebook_export_target_spreadsheet', 'local_gradefiller'),
-                $selecteddetails
+                'spreadsheetformat_help',
+                '',
+                \html_writer::div(s($selectedspreadsheet->get_upload_help()), 'text-muted')
             );
+        }
+
+        if ($selectedspreadsheet !== null) {
             $mform->addElement('hidden', 'spreadsheetformat', $selectedspreadsheet->get_key());
             $mform->setType('spreadsheetformat', PARAM_ALPHANUMEXT);
         }
@@ -192,12 +191,18 @@ class course_export_form extends \moodleform {
             $mform->setType('gradefiller_format', PARAM_ALPHANUMEXT);
         }
 
-        $mform->addElement('filepicker', 'templatefile', get_string('gradebook_template_file', 'local_gradefiller'), null, [
+        $filepickerlabel = $selectedspreadsheet !== null
+            ? $selectedspreadsheet->get_upload_label()
+            : get_string('gradebook_template_file', 'local_gradefiller');
+
+        $mform->addElement('filepicker', 'templatefile', $filepickerlabel, null, [
             'accepted_types' => $acceptedextensions,
             'maxbytes' => get_max_upload_file_size($CFG->maxbytes, $course->maxbytes),
         ]);
         $mform->addRule('templatefile', null, 'required', null, 'client');
-        $mform->addHelpButton('templatefile', 'gradebook_template_file', 'local_gradefiller');
+        if ($selectedspreadsheet === null) {
+            $mform->addHelpButton('templatefile', 'gradebook_template_file', 'local_gradefiller');
+        }
 
         $mform->addElement('hidden', 'id', $course->id);
         $mform->setType('id', PARAM_INT);

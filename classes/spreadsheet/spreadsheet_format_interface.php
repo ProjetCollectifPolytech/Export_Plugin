@@ -67,6 +67,22 @@ interface spreadsheet_format_interface {
     public function get_supported_extensions(): array;
 
     /**
+     * Get the label to display for the upload field when this spreadsheet
+     * format is selected in the UI.
+     *
+     * @return string
+     */
+    public function get_upload_label(): string;
+
+    /**
+     * Get the descriptive help text to display for this spreadsheet format in
+     * the upload UI.
+     *
+     * @return string
+     */
+    public function get_upload_help(): string;
+
+    /**
      * Read identifiers from the spreadsheet
      *
      * @param string $filepath Path to the uploaded spreadsheet file

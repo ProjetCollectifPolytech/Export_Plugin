@@ -84,6 +84,17 @@ class format_university_standard_test extends \advanced_testcase {
         $this->assertSame(['xlsx', 'xlsm'], $this->format->get_supported_extensions());
     }
 
+    /**
+     * Upload UI texts are sourced from the spreadsheet format.
+     *
+     * @covers \local_gradefiller\spreadsheet\format_university_standard::get_upload_label
+     * @covers \local_gradefiller\spreadsheet\format_university_standard::get_upload_help
+     */
+    public function test_upload_ui_texts_are_defined_by_format(): void {
+        $this->assertSame($this->format->get_name(), $this->format->get_upload_label());
+        $this->assertSame($this->format->get_description(), $this->format->get_upload_help());
+    }
+
     // File-dependent tests (require PhpSpreadsheet).
 
     /**

@@ -44,7 +44,7 @@ class workbook_template_format implements course_export_format_interface {
     private const EXPORT_SHEET_NAME = 'Export Moodle';
 
     /** @var string[] Allowed workbook extensions for this export mode */
-    private const ALLOWED_EXTENSIONS = ['xlsx'];
+    private const ALLOWED_EXTENSIONS = ['xlsx', 'xlsm'];
 
     /**
      * @inheritDoc
@@ -65,6 +65,13 @@ class workbook_template_format implements course_export_format_interface {
      */
     public function get_description(): string {
         return get_string('gradebook_export_format_workbook_desc', 'local_gradefiller');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function get_supported_extensions(): array {
+        return self::ALLOWED_EXTENSIONS;
     }
 
     /**

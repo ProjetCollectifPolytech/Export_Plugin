@@ -55,6 +55,15 @@ interface course_export_format_interface {
     public function get_description(): string;
 
     /**
+     * Get the file extensions accepted by this export format for teacher uploads.
+     *
+     * Returned values must not include the leading dot.
+     *
+     * @return string[]
+     */
+    public function get_supported_extensions(): array;
+
+    /**
      * Validate the uploaded workbook template before processing.
      *
      * @param string $filepath Absolute path to the uploaded file

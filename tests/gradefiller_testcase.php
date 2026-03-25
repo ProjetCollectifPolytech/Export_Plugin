@@ -16,6 +16,7 @@
 
 namespace local_gradefiller;
 
+use grade_grade;
 use grade_category;
 use grade_item;
 use stdClass;
@@ -67,6 +68,32 @@ abstract class gradefiller_testcase extends \advanced_testcase {
         $gradeitem->insert();
 
         return $gradeitem;
+    }
+
+    /**
+     * Insert a final grade for a specific user on a specific grade item.
+     *
+     * @param grade_item $gradeitem Grade item
+     * @param int $userid User ID
+     * @param float $gradevalue Final grade value
+     * @return void
+     */
+    protected function assign_grade_to_item(grade_item $gradeitem, int $userid, float $gradevalue): void {
+        $gradegrade = new grade_grade();
+        $gradegrade->itemid = $gradeitem->id;
+        $gradegrade->userid = $userid;
+        $gradegrade->rawgrade = $gradevalue;
+        $gradegrade->rawgrademax = $gradeitem->grademax;
+        $gradegrade->rawgrademin = $gradeitem->grademin;
+        $gradegrade->finalgrade = $gradevalue;
+        $gradegrade->hidden = 0;
+        $gradegrade->locked = 0;
+        $gradegrade->exported = 0;
+        $gradegrade->timecreated = time();
+        $gradegrade->timemodified = time();
+        $gradegrade->aggregationstatus = 'used';
+        $gradegrade->aggregationweight = 1;
+        $gradegrade->insert();
     }
 
     /**

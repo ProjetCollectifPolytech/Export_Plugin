@@ -97,8 +97,8 @@ class course_export_manager {
         $builder = new gradebook_export_builder($course, $groupid, $formdata);
         $exportdata = $builder->build_export_data();
         $outputfile = $format->export_to_template($filepath, $exportdata);
-
-        $filename = clean_filename(pathinfo($originalfilename, PATHINFO_FILENAME) . '_gradefiller_export.xlsx');
+        $extension = strtolower(pathinfo($outputfile, PATHINFO_EXTENSION));
+        $filename = clean_filename(pathinfo($originalfilename, PATHINFO_FILENAME) . '_gradefiller_export.' . $extension);
 
         return [
             'filepath' => $outputfile,

@@ -45,6 +45,7 @@ class course_export_form extends \moodleform {
         $mform = $this->_form;
         $course = $this->_customdata['course'] ?? $COURSE;
         $formats = $this->_customdata['formats'] ?? [];
+        $selectedspreadsheet = $this->_customdata['selectedspreadsheet'] ?? null;
 
         $mform->addElement('header', 'gradeitems', get_string('gradeitemsinc', 'grades'));
         $mform->setExpanded('gradeitems', true);
@@ -132,7 +133,11 @@ class course_export_form extends \moodleform {
         );
         $mform->setDefault('decimals', $CFG->grade_export_decimalpoints);
 
-        $mform->addElement('header', 'gradefilleroptions', get_string('gradebook_export_section', 'local_gradefiller'));
+        $sectiontitle = $selectedspreadsheet !== null
+            ? $selectedspreadsheet->get_name()
+            : get_string('gradebook_export_section', 'local_gradefiller');
+
+        $mform->addElement('header', 'gradefilleroptions', $sectiontitle);
         $mform->setExpanded('gradefilleroptions', true);
 
         $formatoptions = [];
@@ -140,24 +145,64 @@ class course_export_form extends \moodleform {
             $formatoptions[$format->get_key()] = $format->get_name() . ' - ' . $format->get_description();
         }
 
-        $mform->addElement(
-            'select',
-            'gradefiller_format',
-            get_string('gradebook_export_format', 'local_gradefiller'),
-            $formatoptions
-        );
-        $mform->setType('gradefiller_format', PARAM_ALPHANUMEXT);
-        $mform->addRule('gradefiller_format', null, 'required', null, 'client');
-        if (!empty($formatoptions)) {
-            $mform->setDefault('gradefiller_format', array_key_first($formatoptions));
+        $acceptedextensions = [];
+        if ($selectedspreadsheet !== null) {
+            foreach ($selectedspreadsheet->get_supported_extensions() as $extension) {
+                $acceptedextensions[] = '.' . ltrim((string) $extension, '.');
+            }
+        } else {
+            foreach ($formats as $format) {
+                foreach ($format->get_supported_extensions() as $extension) {
+                    $acceptedextensions[] = '.' . ltrim((string) $extension, '.');
+                }
+            }
+        }
+        $acceptedextensions = array_values(array_unique($acceptedextensions));
+        if (empty($acceptedextensions)) {
+            $acceptedextensions = ['.xlsx'];
         }
 
-        $mform->addElement('filepicker', 'templatefile', get_string('gradebook_template_file', 'local_gradefiller'), null, [
-            'accepted_types' => ['.xlsx'],
+        if ($selectedspreadsheet !== null && $selectedspreadsheet->get_upload_help() !== '') {
+            $mform->addElement(
+                'static',
+                'spreadsheetformat_help',
+                '',
+                \html_writer::div(s($selectedspreadsheet->get_upload_help()), 'text-muted')
+            );
+        }
+
+        if ($selectedspreadsheet !== null) {
+            $mform->addElement('hidden', 'spreadsheetformat', $selectedspreadsheet->get_key());
+            $mform->setType('spreadsheetformat', PARAM_ALPHANUMEXT);
+        }
+
+        if (count($formatoptions) > 1) {
+            $mform->addElement(
+                'select',
+                'gradefiller_format',
+                get_string('gradebook_export_format', 'local_gradefiller'),
+                $formatoptions
+            );
+            $mform->setType('gradefiller_format', PARAM_ALPHANUMEXT);
+            $mform->addRule('gradefiller_format', null, 'required', null, 'client');
+            $mform->setDefault('gradefiller_format', array_key_first($formatoptions));
+        } else if (!empty($formatoptions)) {
+            $mform->addElement('hidden', 'gradefiller_format', array_key_first($formatoptions));
+            $mform->setType('gradefiller_format', PARAM_ALPHANUMEXT);
+        }
+
+        $filepickerlabel = $selectedspreadsheet !== null
+            ? $selectedspreadsheet->get_upload_label()
+            : get_string('gradebook_template_file', 'local_gradefiller');
+
+        $mform->addElement('filepicker', 'templatefile', $filepickerlabel, null, [
+            'accepted_types' => $acceptedextensions,
             'maxbytes' => get_max_upload_file_size($CFG->maxbytes, $course->maxbytes),
         ]);
         $mform->addRule('templatefile', null, 'required', null, 'client');
-        $mform->addHelpButton('templatefile', 'gradebook_template_file', 'local_gradefiller');
+        if ($selectedspreadsheet === null) {
+            $mform->addHelpButton('templatefile', 'gradebook_template_file', 'local_gradefiller');
+        }
 
         $mform->addElement('hidden', 'id', $course->id);
         $mform->setType('id', PARAM_INT);

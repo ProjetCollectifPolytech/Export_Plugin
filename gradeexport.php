@@ -27,7 +27,13 @@ require_once($CFG->dirroot . '/grade/export/lib.php');
 require_once($CFG->dirroot . '/local/gradefiller/lib.php');
 
 $id = required_param('id', PARAM_INT);
-$PAGE->set_url('/local/gradefiller/gradeexport.php', ['id' => $id]);
+$selectedspreadsheetkey = optional_param('spreadsheetformat', '', PARAM_ALPHANUMEXT);
+
+$pageparams = ['id' => $id];
+if ($selectedspreadsheetkey !== '') {
+    $pageparams['spreadsheetformat'] = $selectedspreadsheetkey;
+}
+$PAGE->set_url('/local/gradefiller/gradeexport.php', $pageparams);
 
 if (!$course = $DB->get_record('course', ['id' => $id])) {
     throw new \moodle_exception('invalidcourseid');
@@ -47,11 +53,24 @@ $PAGE->set_title(get_string('gradebook_export_page_title', 'local_gradefiller'))
 $PAGE->set_heading($course->fullname);
 $PAGE->set_pagetype('grade-export-gradefiller-index');
 
+$spreadsheetmanager = new \local_gradefiller\manager();
+$selectedspreadsheet = null;
+if ($selectedspreadsheetkey !== '') {
+    $selectedspreadsheet = $spreadsheetmanager->get_format($selectedspreadsheetkey);
+    if ($selectedspreadsheet === null) {
+        throw new \moodle_exception('error_format_not_found', 'local_gradefiller', '', $selectedspreadsheetkey);
+    }
+}
+
 $manager = new \local_gradefiller\export\course_export_manager();
 $formats = $manager->get_available_formats();
 $form = new \local_gradefiller\form\course_export_form(
-    new moodle_url('/local/gradefiller/gradeexport.php', ['id' => $id]),
-    ['course' => $course, 'formats' => $formats]
+    local_gradefiller_get_grade_export_url($id, $selectedspreadsheetkey ?: null),
+    [
+        'course' => $course,
+        'formats' => $formats,
+        'selectedspreadsheet' => $selectedspreadsheet,
+    ]
 );
 
 $groupmode = groups_get_course_groupmode($course);
@@ -91,14 +110,25 @@ if ($data = $form->get_data()) {
     }
 
     try {
-        $result = $manager->process_export(
-            $tempfile,
-            $data->gradefiller_format,
-            $course,
-            (int)$currentgroup,
-            $data,
-            $originalfilename
-        );
+        if ($selectedspreadsheet !== null) {
+            $result = (new \local_gradefiller\export\course_spreadsheet_export_manager())->process_export(
+                $tempfile,
+                $selectedspreadsheet,
+                $course,
+                (int) $currentgroup,
+                $data,
+                $originalfilename
+            );
+        } else {
+            $result = $manager->process_export(
+                $tempfile,
+                $data->gradefiller_format,
+                $course,
+                (int)$currentgroup,
+                $data,
+                $originalfilename
+            );
+        }
 
         \core_form\util::form_download_complete();
         \local_gradefiller\util\file_handler::cleanup($tempfile);
@@ -125,7 +155,7 @@ print_grade_page_head(
     $actionbar
 );
 
-groups_print_course_menu($course, local_gradefiller_get_grade_export_url($id)->out(false));
+groups_print_course_menu($course, local_gradefiller_get_grade_export_url($id, $selectedspreadsheetkey ?: null)->out(false));
 echo html_writer::div('', 'clearer');
 echo $OUTPUT->notification(get_string('gradebook_export_intro', 'local_gradefiller'), 'info');
 $form->display();

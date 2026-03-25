@@ -72,4 +72,18 @@ final class lib_test extends gradefiller_testcase {
 
         $this->assertNull($accessdata);
     }
+
+    public function test_get_grade_export_bridge_options_returns_spreadsheet_labels_and_urls(): void {
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+
+        $options = \local_gradefiller_get_grade_export_bridge_options($course->id);
+
+        $this->assertNotEmpty($options);
+        $this->assertSame('university_standard', $options[0]['key']);
+        $this->assertSame(get_string('format_university_standard_name', 'local_gradefiller'), $options[0]['label']);
+        $this->assertStringContainsString('spreadsheetformat=university_standard', $options[0]['url']);
+    }
 }

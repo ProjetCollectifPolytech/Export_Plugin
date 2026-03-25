@@ -43,6 +43,7 @@ $string['page_title'] = 'Fill Grades in a Spreadsheet';
 $string['gradebook_export_page_title'] = 'Export grades with Grade Filler';
 $string['gradebook_export_section'] = 'Grade Filler template';
 $string['gradebook_export_intro'] = 'Keep Moodle\'s native grade export options, then inject the result into your workbook template.';
+$string['gradebook_export_target_spreadsheet'] = 'Target spreadsheet format';
 $string['activity_info'] = 'Activity Information';
 $string['activity'] = 'Activity';
 $string['type'] = 'Type';
@@ -56,7 +57,7 @@ $string['drag_drop_zone'] = 'Drag and drop your file here';
 $string['or_click_to_select'] = 'or click to select a file';
 $string['file_formats_accepted'] = 'Accepted formats: XLSX, XLSM';
 $string['gradebook_template_file'] = 'Workbook template';
-$string['gradebook_template_file_help'] = 'Upload the workbook template that should receive the exported Moodle grade table.';
+$string['gradebook_template_file_help'] = 'Upload the file expected by the selected spreadsheet format. Accepted file types adapt automatically to the chosen format.';
 
 $string['spreadsheet_format'] = 'Spreadsheet format';
 $string['select_format'] = '-- Select format --';
@@ -75,7 +76,7 @@ $string['btn_process_download'] = 'Process and Download Filled File';
 $string['format_university_standard_name'] = 'Apogee';
 $string['format_university_standard_desc'] = 'Skip 17 header rows, Column A = ID, Column E = Grade';
 $string['gradebook_export_format_workbook_name'] = 'Workbook template';
-$string['gradebook_export_format_workbook_desc'] = 'Upload an XLSX workbook. Grade Filler injects the classic Moodle export into a worksheet named "Export Moodle".';
+$string['gradebook_export_format_workbook_desc'] = 'Upload an XLSX or XLSM workbook. Grade Filler injects the classic Moodle export into a worksheet named "Export Moodle".';
 
 // Help.
 $string['how_it_works'] = 'How it works';
@@ -111,7 +112,7 @@ $string['error_export_format_not_found'] = 'Grade Filler export format not found
 $string['error_export_template_required'] = 'A workbook template file is required';
 $string['error_export_template_invalid'] = 'Invalid workbook template: {$a}';
 $string['error_export_template_write'] = 'Unable to write the Grade Filler export workbook: {$a}';
-$string['error_export_template_extension'] = 'Unsupported workbook template extension: {$a}. Use XLSX.';
+$string['error_export_template_extension'] = 'Unsupported workbook template extension: {$a}. Use XLSX or XLSM.';
 $string['error_no_permission'] = 'You do not have permission to access this page';
 $string['error_no_grade_item'] = 'This activity does not have a grade item';
 $string['error_unsupported_extension'] = 'Unsupported file extension: {$a}. Use XLSX or XLSM.';

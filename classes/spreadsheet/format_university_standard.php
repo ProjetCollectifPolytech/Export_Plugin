@@ -89,6 +89,15 @@ class format_university_standard implements spreadsheet_format_interface {
     }
 
     /**
+     * Get the file extensions supported by this spreadsheet format.
+     *
+     * @return string[]
+     */
+    public function get_supported_extensions(): array {
+        return self::ALLOWED_EXTENSIONS;
+    }
+
+    /**
      * Read identifiers from the spreadsheet
      *
      * @param string $filepath Path to the uploaded spreadsheet file

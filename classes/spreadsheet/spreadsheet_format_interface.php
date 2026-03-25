@@ -58,6 +58,15 @@ interface spreadsheet_format_interface {
     public function get_description(): string;
 
     /**
+     * Get the file extensions accepted by this spreadsheet format.
+     *
+     * Returned values must not include the leading dot.
+     *
+     * @return string[]
+     */
+    public function get_supported_extensions(): array;
+
+    /**
      * Read identifiers from the spreadsheet
      *
      * @param string $filepath Path to the uploaded spreadsheet file

@@ -75,6 +75,15 @@ class format_university_standard_test extends \advanced_testcase {
         $this->assertNotEmpty($description);
     }
 
+    /**
+     * get_supported_extensions returns the extensions declared by the format.
+     *
+     * @covers \local_gradefiller\spreadsheet\format_university_standard::get_supported_extensions
+     */
+    public function test_get_supported_extensions_returns_xlsx_and_xlsm(): void {
+        $this->assertSame(['xlsx', 'xlsm'], $this->format->get_supported_extensions());
+    }
+
     // File-dependent tests (require PhpSpreadsheet).
 
     /**

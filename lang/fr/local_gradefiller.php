@@ -57,7 +57,7 @@ $string['drag_drop_zone'] = 'Glissez-déposez votre fichier ici';
 $string['or_click_to_select'] = 'ou cliquez pour sélectionner un fichier';
 $string['file_formats_accepted'] = 'Formats acceptés : XLSX, XLSM';
 $string['gradebook_template_file'] = 'Classeur modèle';
-$string['gradebook_template_file_help'] = 'Téléversez le classeur modèle qui doit recevoir le tableau d\'export Moodle. Les formats XLSX et XLSM sont acceptés.';
+$string['gradebook_template_file_help'] = 'Téléversez le fichier attendu par le format de tableur sélectionné. Les types acceptés s\'adaptent automatiquement au format choisi.';
 
 $string['spreadsheet_format'] = 'Format du tableur';
 $string['select_format'] = '-- Sélectionnez un format --';

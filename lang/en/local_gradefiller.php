@@ -57,7 +57,7 @@ $string['drag_drop_zone'] = 'Drag and drop your file here';
 $string['or_click_to_select'] = 'or click to select a file';
 $string['file_formats_accepted'] = 'Accepted formats: XLSX, XLSM';
 $string['gradebook_template_file'] = 'Workbook template';
-$string['gradebook_template_file_help'] = 'Upload the workbook template that should receive the exported Moodle grade table. XLSX and XLSM formats are accepted.';
+$string['gradebook_template_file_help'] = 'Upload the file expected by the selected spreadsheet format. Accepted file types adapt automatically to the chosen format.';
 
 $string['spreadsheet_format'] = 'Spreadsheet format';
 $string['select_format'] = '-- Select format --';

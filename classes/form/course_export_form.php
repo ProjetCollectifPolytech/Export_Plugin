@@ -142,13 +142,15 @@ class course_export_form extends \moodleform {
         }
 
         $acceptedextensions = [];
-        foreach ($formats as $format) {
-            if (!method_exists($format, 'get_supported_extensions')) {
-                continue;
-            }
-
-            foreach ($format->get_supported_extensions() as $extension) {
+        if ($selectedspreadsheet !== null) {
+            foreach ($selectedspreadsheet->get_supported_extensions() as $extension) {
                 $acceptedextensions[] = '.' . ltrim((string) $extension, '.');
+            }
+        } else {
+            foreach ($formats as $format) {
+                foreach ($format->get_supported_extensions() as $extension) {
+                    $acceptedextensions[] = '.' . ltrim((string) $extension, '.');
+                }
             }
         }
         $acceptedextensions = array_values(array_unique($acceptedextensions));

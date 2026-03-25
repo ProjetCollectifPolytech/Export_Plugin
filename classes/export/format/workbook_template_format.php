@@ -29,6 +29,8 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->libdir . '/phpspreadsheet/vendor/autoload.php');
 
 use local_gradefiller\export\course_export_format_interface;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
@@ -100,15 +102,12 @@ class workbook_template_format implements course_export_format_interface {
             $spreadsheet = IOFactory::load($filepath);
             $worksheet = $this->reset_export_sheet($spreadsheet);
 
-            $worksheet->fromArray([$exportdata->headers], null, 'A1');
-            if (!empty($exportdata->rows)) {
-                $worksheet->fromArray($exportdata->rows, null, 'A2');
-            }
+            $this->write_export_table($worksheet, $exportdata);
 
             $worksheet->freezePane('A2');
             $worksheet->getStyle('1:1')->getFont()->setBold(true);
             $worksheet->setAutoFilter(
-                'A1:' . \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(count($exportdata->headers)) . '1'
+                'A1:' . Coordinate::stringFromColumnIndex(count($exportdata->headers)) . '1'
             );
 
             $outputfile = make_temp_directory('gradefiller') . '/'
@@ -144,6 +143,45 @@ class workbook_template_format implements course_export_format_interface {
         $spreadsheet->setActiveSheetIndex($index);
 
         return $worksheet;
+    }
+
+    /**
+     * Write the exported table while preserving Moodle's already formatted values.
+     *
+     * We intentionally write scalar values explicitly as strings because the
+     * grade export builder has already decided how grades should be rendered
+     * (decimal places, percentages, letters, timestamps, leading zeros, etc.).
+     * Letting PhpSpreadsheet auto-cast those values would strip trailing zeros
+     * such as "15.00" and subtly change the exported workbook.
+     *
+     * @param Worksheet $worksheet Target worksheet
+     * @param object $exportdata Exported headers and rows
+     * @return void
+     */
+    private function write_export_table(Worksheet $worksheet, object $exportdata): void {
+        foreach ($exportdata->headers as $columnindex => $value) {
+            $worksheet->setCellValueExplicitByColumnAndRow(
+                $columnindex + 1,
+                1,
+                (string) $value,
+                DataType::TYPE_STRING
+            );
+        }
+
+        foreach ($exportdata->rows as $rowindex => $rowvalues) {
+            foreach ($rowvalues as $columnindex => $value) {
+                if ($value === null) {
+                    continue;
+                }
+
+                $worksheet->setCellValueExplicitByColumnAndRow(
+                    $columnindex + 1,
+                    $rowindex + 2,
+                    (string) $value,
+                    DataType::TYPE_STRING
+                );
+            }
+        }
     }
 
     /**

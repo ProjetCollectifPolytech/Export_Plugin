@@ -297,8 +297,82 @@ function local_gradefiller_before_standard_top_of_body_html(): string {
         'label' => get_string('gradebook_export_selector_label', 'local_gradefiller'),
     ];
     $json = json_encode($config, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
+    $script = <<<JS
+(function(config) {
+    var applyBridge = function() {
+        var input = document.querySelector('input[name="exportas"]');
+        if (!input) {
+            return;
+        }
 
-    return html_writer::script(
-        "require(['local_gradefiller/grade_export_bridge'], function(Bridge) { Bridge.init($json); });"
-    );
+        var selectmenu = input.closest('.select-menu');
+        if (!selectmenu) {
+            return;
+        }
+
+        var listbox = selectmenu.querySelector('[role="listbox"]');
+        var toggle = selectmenu.querySelector('.dropdown-toggle');
+        if (!listbox || !toggle) {
+            return;
+        }
+
+        var option = null;
+        listbox.querySelectorAll('.dropdown-item[role="option"]').forEach(function(item) {
+            if (item.dataset.value === config.url) {
+                option = item;
+            }
+        });
+
+        if (!option) {
+            option = document.createElement('li');
+            option.className = 'dropdown-item';
+            option.setAttribute('role', 'option');
+            option.setAttribute('data-value', config.url);
+            option.textContent = config.label;
+            listbox.appendChild(option);
+        }
+
+        if (!option.dataset.gradefillerBound) {
+            var navigate = function(event) {
+                if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') {
+                    return;
+                }
+                event.preventDefault();
+                window.location.href = config.url;
+            };
+
+            option.tabIndex = 0;
+            option.addEventListener('click', navigate);
+            option.addEventListener('keydown', navigate);
+            option.dataset.gradefillerBound = '1';
+        }
+
+        if (window.location.pathname.indexOf('/local/gradefiller/gradeexport.php') !== -1) {
+            listbox.querySelectorAll('.dropdown-item[role="option"]').forEach(function(item) {
+                item.removeAttribute('aria-selected');
+            });
+            option.setAttribute('aria-selected', 'true');
+            input.value = config.url;
+
+            var selected = toggle.querySelector('[data-selected-option]');
+            if (selected) {
+                selected.textContent = config.label;
+            } else {
+                toggle.textContent = config.label;
+            }
+        }
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', applyBridge);
+    } else {
+        applyBridge();
+    }
+
+    window.setTimeout(applyBridge, 100);
+    window.setTimeout(applyBridge, 500);
+})({$json});
+JS;
+
+    return html_writer::script($script);
 }

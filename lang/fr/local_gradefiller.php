@@ -26,6 +26,7 @@ $string['pluginname'] = 'Remplisseur de notes';
 
 // Navigation.
 $string['fill_grades'] = 'Remplir les notes dans un tableur';
+$string['gradebook_export_selector_label'] = 'Grade Filler';
 
 // Capabilities.
 $string['gradefiller:view'] = 'Voir Grade Filler';
@@ -39,6 +40,9 @@ $string['driver_papergrade'] = 'Papergrade (scanner)';
 
 // Page.
 $string['page_title'] = 'Remplir les notes dans un tableur';
+$string['gradebook_export_page_title'] = 'Exporter les notes avec Grade Filler';
+$string['gradebook_export_section'] = 'Template Grade Filler';
+$string['gradebook_export_intro'] = 'Conservez les options natives d\'export Moodle, puis injectez le résultat dans votre classeur modèle.';
 $string['activity_info'] = 'Informations sur l\'activité';
 $string['activity'] = 'Activité';
 $string['type'] = 'Type';
@@ -51,9 +55,13 @@ $string['spreadsheet_file'] = 'Fichier tableur';
 $string['drag_drop_zone'] = 'Glissez-déposez votre fichier ici';
 $string['or_click_to_select'] = 'ou cliquez pour sélectionner un fichier';
 $string['file_formats_accepted'] = 'Formats acceptés : XLSX, XLSM';
+$string['gradebook_template_file'] = 'Classeur modèle';
+$string['gradebook_template_file_help'] = 'Téléversez le classeur modèle qui doit recevoir le tableau d\'export Moodle.';
 
 $string['spreadsheet_format'] = 'Format du tableur';
 $string['select_format'] = '-- Sélectionnez un format --';
+$string['gradebook_export_format'] = 'Format d\'export Grade Filler';
+$string['gradebook_export_download'] = 'Télécharger le classeur exporté';
 
 $string['grade_source'] = 'Source des notes';
 $string['source_auto'] = 'Détection automatique (ID Moodle ou anonyme)';
@@ -66,6 +74,8 @@ $string['btn_process_download'] = 'Traiter et télécharger le fichier rempli';
 // Formats.
 $string['format_university_standard_name'] = 'Apogee';
 $string['format_university_standard_desc'] = 'Ignorer 17 lignes d\'en-tête, colonne A = ID, colonne E = note';
+$string['gradebook_export_format_workbook_name'] = 'Classeur modèle';
+$string['gradebook_export_format_workbook_desc'] = 'Téléversez un classeur XLSX. Grade Filler injecte l\'export Moodle classique dans une feuille nommée "Export Moodle".';
 
 // Help.
 $string['how_it_works'] = 'Comment ça marche';
@@ -97,6 +107,11 @@ $string['error_writing_file'] = 'Erreur d\'écriture du fichier : {$a}';
 $string['error_format_invalid'] = 'Format de fichier invalide : {$a}';
 $string['error_format_insufficient_rows'] = 'Le fichier doit avoir au moins {$a} lignes';
 $string['error_format_no_identifiers'] = 'Aucun identifiant trouvé dans la colonne attendue';
+$string['error_export_format_not_found'] = 'Format d\'export Grade Filler introuvable : {$a}';
+$string['error_export_template_required'] = 'Un fichier modèle est requis';
+$string['error_export_template_invalid'] = 'Classeur modèle invalide : {$a}';
+$string['error_export_template_write'] = 'Impossible d\'écrire le classeur d\'export Grade Filler : {$a}';
+$string['error_export_template_extension'] = 'Extension de classeur modèle non supportée : {$a}. Utilisez XLSX.';
 $string['error_no_permission'] = 'Vous n\'avez pas la permission d\'accéder à cette page';
 $string['error_no_grade_item'] = 'Cette activité n\'a pas d\'élément de notation';
 $string['error_unsupported_extension'] = 'Extension de fichier non supportée : {$a}. Utilisez XLSX ou XLSM.';

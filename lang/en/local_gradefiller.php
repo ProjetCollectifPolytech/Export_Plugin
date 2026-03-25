@@ -26,6 +26,7 @@ $string['pluginname'] = 'Grade Filler';
 
 // Navigation.
 $string['fill_grades'] = 'Fill grades in a spreadsheet';
+$string['gradebook_export_selector_label'] = 'Grade Filler';
 
 // Capabilities.
 $string['gradefiller:view'] = 'View Grade Filler';
@@ -39,6 +40,9 @@ $string['driver_papergrade'] = 'Papergrade (Scanner)';
 
 // Page.
 $string['page_title'] = 'Fill Grades in a Spreadsheet';
+$string['gradebook_export_page_title'] = 'Export grades with Grade Filler';
+$string['gradebook_export_section'] = 'Grade Filler template';
+$string['gradebook_export_intro'] = 'Keep Moodle\'s native grade export options, then inject the result into your workbook template.';
 $string['activity_info'] = 'Activity Information';
 $string['activity'] = 'Activity';
 $string['type'] = 'Type';
@@ -51,9 +55,13 @@ $string['spreadsheet_file'] = 'Spreadsheet file';
 $string['drag_drop_zone'] = 'Drag and drop your file here';
 $string['or_click_to_select'] = 'or click to select a file';
 $string['file_formats_accepted'] = 'Accepted formats: XLSX, XLSM';
+$string['gradebook_template_file'] = 'Workbook template';
+$string['gradebook_template_file_help'] = 'Upload the workbook template that should receive the exported Moodle grade table.';
 
 $string['spreadsheet_format'] = 'Spreadsheet format';
 $string['select_format'] = '-- Select format --';
+$string['gradebook_export_format'] = 'Grade Filler export format';
+$string['gradebook_export_download'] = 'Download workbook export';
 
 $string['grade_source'] = 'Grade source';
 $string['source_auto'] = 'Auto-detect (Moodle ID or Anonymous)';
@@ -66,6 +74,8 @@ $string['btn_process_download'] = 'Process and Download Filled File';
 // Formats.
 $string['format_university_standard_name'] = 'Apogee';
 $string['format_university_standard_desc'] = 'Skip 17 header rows, Column A = ID, Column E = Grade';
+$string['gradebook_export_format_workbook_name'] = 'Workbook template';
+$string['gradebook_export_format_workbook_desc'] = 'Upload an XLSX workbook. Grade Filler injects the classic Moodle export into a worksheet named "Export Moodle".';
 
 // Help.
 $string['how_it_works'] = 'How it works';
@@ -97,6 +107,11 @@ $string['error_writing_file'] = 'Error writing file: {$a}';
 $string['error_format_invalid'] = 'Invalid file format: {$a}';
 $string['error_format_insufficient_rows'] = 'File must have at least {$a} rows';
 $string['error_format_no_identifiers'] = 'No identifiers found in the expected column';
+$string['error_export_format_not_found'] = 'Grade Filler export format not found: {$a}';
+$string['error_export_template_required'] = 'A workbook template file is required';
+$string['error_export_template_invalid'] = 'Invalid workbook template: {$a}';
+$string['error_export_template_write'] = 'Unable to write the Grade Filler export workbook: {$a}';
+$string['error_export_template_extension'] = 'Unsupported workbook template extension: {$a}. Use XLSX.';
 $string['error_no_permission'] = 'You do not have permission to access this page';
 $string['error_no_grade_item'] = 'This activity does not have a grade item';
 $string['error_unsupported_extension'] = 'Unsupported file extension: {$a}. Use XLSX or XLSM.';

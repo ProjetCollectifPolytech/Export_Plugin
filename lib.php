@@ -25,6 +25,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . '/gradelib.php');
+require_once($CFG->dirroot . '/grade/lib.php');
 
 /**
  * Check whether the current user can view Grade Filler.
@@ -213,4 +214,91 @@ function local_gradefiller_extend_navigation_course($navigation, $course, $conte
     }
 
     local_gradefiller_extend_navigation_module($navigation, $course, $PAGE->cm);
+}
+
+/**
+ * Return the local Grade Filler course export URL.
+ *
+ * @param int $courseid Course ID
+ * @return moodle_url
+ */
+function local_gradefiller_get_grade_export_url(int $courseid): moodle_url {
+    return new moodle_url('/local/gradefiller/gradeexport.php', ['id' => $courseid]);
+}
+
+/**
+ * Resolve a native grade export plugin key for the action bar on Grade Filler pages.
+ *
+ * @param int $courseid Course ID
+ * @return string
+ */
+function local_gradefiller_get_grade_export_action_plugin(int $courseid): string {
+    $exports = \grade_helper::get_plugins_export($courseid);
+    if (empty($exports) || !is_array($exports)) {
+        return 'ods';
+    }
+
+    foreach ($exports as $export) {
+        if ($export->id !== 'keymanager') {
+            return $export->id;
+        }
+    }
+
+    return 'ods';
+}
+
+/**
+ * Determine whether the current page is a grade export page that should expose the Grade Filler bridge.
+ *
+ * @return bool
+ */
+function local_gradefiller_is_grade_export_page(): bool {
+    global $PAGE;
+
+    if (empty($PAGE->url) || empty($PAGE->context)) {
+        return false;
+    }
+
+    if ((int)$PAGE->context->contextlevel !== CONTEXT_COURSE) {
+        return false;
+    }
+
+    $path = $PAGE->url->get_path();
+    $supportedpaths = [
+        '/grade/export/ods/index.php',
+        '/grade/export/txt/index.php',
+        '/grade/export/xls/index.php',
+        '/grade/export/xml/index.php',
+        '/local/gradefiller/gradeexport.php',
+    ];
+
+    return in_array($path, $supportedpaths, true);
+}
+
+/**
+ * Inject the Grade Filler entry into Moodle's native grade export selector.
+ *
+ * @return string
+ */
+function local_gradefiller_before_standard_top_of_body_html(): string {
+    global $PAGE;
+
+    if (!local_gradefiller_is_grade_export_page()) {
+        return '';
+    }
+
+    $context = $PAGE->context;
+    if (!has_capability('moodle/grade:export', $context) || !local_gradefiller_user_can_process($context)) {
+        return '';
+    }
+
+    $config = [
+        'url' => local_gradefiller_get_grade_export_url($context->instanceid)->out(false),
+        'label' => get_string('gradebook_export_selector_label', 'local_gradefiller'),
+    ];
+    $json = json_encode($config, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
+
+    return html_writer::script(
+        "require(['local_gradefiller/grade_export_bridge'], function(Bridge) { Bridge.init($json); });"
+    );
 }

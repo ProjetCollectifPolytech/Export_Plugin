@@ -141,6 +141,21 @@ class course_export_form extends \moodleform {
             $formatoptions[$format->get_key()] = $format->get_name() . ' - ' . $format->get_description();
         }
 
+        $acceptedextensions = [];
+        foreach ($formats as $format) {
+            if (!method_exists($format, 'get_supported_extensions')) {
+                continue;
+            }
+
+            foreach ($format->get_supported_extensions() as $extension) {
+                $acceptedextensions[] = '.' . ltrim((string) $extension, '.');
+            }
+        }
+        $acceptedextensions = array_values(array_unique($acceptedextensions));
+        if (empty($acceptedextensions)) {
+            $acceptedextensions = ['.xlsx'];
+        }
+
         if ($selectedspreadsheet !== null) {
             $selecteddetails = \html_writer::span(s($selectedspreadsheet->get_name()), 'font-weight-bold');
             if ($selectedspreadsheet->get_description() !== '') {
@@ -176,7 +191,7 @@ class course_export_form extends \moodleform {
         }
 
         $mform->addElement('filepicker', 'templatefile', get_string('gradebook_template_file', 'local_gradefiller'), null, [
-            'accepted_types' => ['.xlsx'],
+            'accepted_types' => $acceptedextensions,
             'maxbytes' => get_max_upload_file_size($CFG->maxbytes, $course->maxbytes),
         ]);
         $mform->addRule('templatefile', null, 'required', null, 'client');

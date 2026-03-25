@@ -54,11 +54,31 @@ final class workbook_template_format_test extends \advanced_testcase {
         $this->assertSame('15.00', $sheet->getCell('B2')->getFormattedValue());
     }
 
-    public function test_validate_template_rejects_non_xlsx_files(): void {
+    public function test_validate_template_rejects_unsupported_extensions(): void {
         $this->require_phpspreadsheet();
         $this->expectException(\moodle_exception::class);
 
-        (new workbook_template_format())->validate_template(__DIR__ . '/fixtures/not_supported.xlsm');
+        (new workbook_template_format())->validate_template(__DIR__ . '/fixtures/not_supported.ods');
+    }
+
+    public function test_export_to_template_accepts_xlsm_extension(): void {
+        $this->require_phpspreadsheet();
+
+        $format = new workbook_template_format();
+        $template = $this->create_template_workbook('xlsm');
+        $output = $format->export_to_template($template, (object) [
+            'headers' => ['Student', 'Grade'],
+            'rows' => [
+                ['Alice', '15.00'],
+            ],
+        ]);
+
+        $this->assertStringEndsWith('.xlsm', $output);
+        $workbook = IOFactory::load($output);
+        $sheet = $workbook->getSheetByName('Export Moodle');
+
+        $this->assertNotNull($sheet);
+        $this->assertSame('Alice', $sheet->getCell('A2')->getValue());
     }
 
     /**
@@ -77,12 +97,12 @@ final class workbook_template_format_test extends \advanced_testcase {
      *
      * @return string
      */
-    private function create_template_workbook(): string {
+    private function create_template_workbook(string $extension = 'xlsx'): string {
         $spreadsheet = new Spreadsheet();
         $spreadsheet->getActiveSheet()->setTitle('Template');
         $spreadsheet->getActiveSheet()->setCellValue('A1', 'Keep me');
 
-        $filepath = make_temp_directory('gradefiller') . '/template_' . uniqid('', true) . '.xlsx';
+        $filepath = make_temp_directory('gradefiller') . '/template_' . uniqid('', true) . '.' . $extension;
         (new Xlsx($spreadsheet))->save($filepath);
 
         return $filepath;

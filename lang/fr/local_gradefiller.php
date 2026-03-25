@@ -57,7 +57,7 @@ $string['drag_drop_zone'] = 'Glissez-déposez votre fichier ici';
 $string['or_click_to_select'] = 'ou cliquez pour sélectionner un fichier';
 $string['file_formats_accepted'] = 'Formats acceptés : XLSX, XLSM';
 $string['gradebook_template_file'] = 'Classeur modèle';
-$string['gradebook_template_file_help'] = 'Téléversez le classeur modèle qui doit recevoir le tableau d\'export Moodle.';
+$string['gradebook_template_file_help'] = 'Téléversez le classeur modèle qui doit recevoir le tableau d\'export Moodle. Les formats XLSX et XLSM sont acceptés.';
 
 $string['spreadsheet_format'] = 'Format du tableur';
 $string['select_format'] = '-- Sélectionnez un format --';
@@ -76,7 +76,7 @@ $string['btn_process_download'] = 'Traiter et télécharger le fichier rempli';
 $string['format_university_standard_name'] = 'Apogee';
 $string['format_university_standard_desc'] = 'Ignorer 17 lignes d\'en-tête, colonne A = ID, colonne E = note';
 $string['gradebook_export_format_workbook_name'] = 'Classeur modèle';
-$string['gradebook_export_format_workbook_desc'] = 'Téléversez un classeur XLSX. Grade Filler injecte l\'export Moodle classique dans une feuille nommée "Export Moodle".';
+$string['gradebook_export_format_workbook_desc'] = 'Téléversez un classeur XLSX ou XLSM. Grade Filler injecte l\'export Moodle classique dans une feuille nommée "Export Moodle".';
 
 // Help.
 $string['how_it_works'] = 'Comment ça marche';
@@ -112,7 +112,7 @@ $string['error_export_format_not_found'] = 'Format d\'export Grade Filler introu
 $string['error_export_template_required'] = 'Un fichier modèle est requis';
 $string['error_export_template_invalid'] = 'Classeur modèle invalide : {$a}';
 $string['error_export_template_write'] = 'Impossible d\'écrire le classeur d\'export Grade Filler : {$a}';
-$string['error_export_template_extension'] = 'Extension de classeur modèle non supportée : {$a}. Utilisez XLSX.';
+$string['error_export_template_extension'] = 'Extension de classeur modèle non supportée : {$a}. Utilisez XLSX ou XLSM.';
 $string['error_no_permission'] = 'Vous n\'avez pas la permission d\'accéder à cette page';
 $string['error_no_grade_item'] = 'Cette activité n\'a pas d\'élément de notation';
 $string['error_unsupported_extension'] = 'Extension de fichier non supportée : {$a}. Utilisez XLSX ou XLSM.';

@@ -227,6 +227,20 @@ function local_gradefiller_get_grade_export_url(int $courseid): moodle_url {
 }
 
 /**
+ * Check whether the current user can access the Grade Filler grade export bridge.
+ *
+ * This bridge extends Moodle's native grade export workflow, so it follows the
+ * same course-level export permission model without changing the existing
+ * activity-based Grade Filler permissions.
+ *
+ * @param context_course $context Course context
+ * @return bool
+ */
+function local_gradefiller_can_access_grade_export_bridge(context_course $context): bool {
+    return has_capability('moodle/grade:export', $context);
+}
+
+/**
  * Resolve a native grade export plugin key for the action bar on Grade Filler pages.
  *
  * @param int $courseid Course ID
@@ -255,14 +269,9 @@ function local_gradefiller_get_grade_export_action_plugin(int $courseid): string
 function local_gradefiller_is_grade_export_page(): bool {
     global $PAGE;
 
-    if (empty($PAGE->url) || empty($PAGE->context)) {
+    if (!$PAGE->has_set_url() || !$PAGE->context instanceof context_course) {
         return false;
     }
-
-    if ((int)$PAGE->context->contextlevel !== CONTEXT_COURSE) {
-        return false;
-    }
-
     $path = $PAGE->url->get_path();
     $supportedpaths = [
         '/grade/export/ods/index.php',
@@ -288,7 +297,7 @@ function local_gradefiller_before_standard_top_of_body_html(): string {
     }
 
     $context = $PAGE->context;
-    if (!has_capability('moodle/grade:export', $context) || !local_gradefiller_user_can_process($context)) {
+    if (!$context instanceof context_course || !local_gradefiller_can_access_grade_export_bridge($context)) {
         return '';
     }
 
@@ -298,80 +307,9 @@ function local_gradefiller_before_standard_top_of_body_html(): string {
     ];
     $json = json_encode($config, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
     $script = <<<JS
-(function(config) {
-    var applyBridge = function() {
-        var input = document.querySelector('input[name="exportas"]');
-        if (!input) {
-            return;
-        }
-
-        var selectmenu = input.closest('.select-menu');
-        if (!selectmenu) {
-            return;
-        }
-
-        var listbox = selectmenu.querySelector('[role="listbox"]');
-        var toggle = selectmenu.querySelector('.dropdown-toggle');
-        if (!listbox || !toggle) {
-            return;
-        }
-
-        var option = null;
-        listbox.querySelectorAll('.dropdown-item[role="option"]').forEach(function(item) {
-            if (item.dataset.value === config.url) {
-                option = item;
-            }
-        });
-
-        if (!option) {
-            option = document.createElement('li');
-            option.className = 'dropdown-item';
-            option.setAttribute('role', 'option');
-            option.setAttribute('data-value', config.url);
-            option.textContent = config.label;
-            listbox.appendChild(option);
-        }
-
-        if (!option.dataset.gradefillerBound) {
-            var navigate = function(event) {
-                if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') {
-                    return;
-                }
-                event.preventDefault();
-                window.location.href = config.url;
-            };
-
-            option.tabIndex = 0;
-            option.addEventListener('click', navigate);
-            option.addEventListener('keydown', navigate);
-            option.dataset.gradefillerBound = '1';
-        }
-
-        if (window.location.pathname.indexOf('/local/gradefiller/gradeexport.php') !== -1) {
-            listbox.querySelectorAll('.dropdown-item[role="option"]').forEach(function(item) {
-                item.removeAttribute('aria-selected');
-            });
-            option.setAttribute('aria-selected', 'true');
-            input.value = config.url;
-
-            var selected = toggle.querySelector('[data-selected-option]');
-            if (selected) {
-                selected.textContent = config.label;
-            } else {
-                toggle.textContent = config.label;
-            }
-        }
-    };
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', applyBridge);
-    } else {
-        applyBridge();
-    }
-
-    window.setTimeout(applyBridge, 100);
-    window.setTimeout(applyBridge, 500);
-})({$json});
+require(['local_gradefiller/grade_export_bridge'], function(bridge) {
+    bridge.init({$json});
+});
 JS;
 
     return html_writer::script($script);

@@ -28,31 +28,68 @@ define([], function() {
      * @param {Object} config Bridge configuration
      */
     var injectOption = function(config) {
-        var selector = document.querySelector('select[name="exportas"]');
-        if (!selector || !config || !config.url || !config.label) {
+        var input = document.querySelector('input[name="exportas"]');
+        if (!input || !config || !config.url || !config.label) {
             return;
         }
 
-        var option = selector.querySelector('option[value="' + config.url + '"]');
-        if (!option) {
-            option = document.createElement('option');
-            option.value = config.url;
-            selector.appendChild(option);
+        var selectMenu = input.closest('.select-menu');
+        if (!selectMenu) {
+            return;
         }
 
-        option.textContent = config.label;
+        var listbox = selectMenu.querySelector('[role="listbox"]');
+        var toggle = selectMenu.querySelector('.dropdown-toggle');
+        if (!listbox || !toggle) {
+            return;
+        }
+
+        var option = null;
+        listbox.querySelectorAll('.dropdown-item[role="option"]').forEach(function(item) {
+            if (item.dataset.value === config.url) {
+                option = item;
+            }
+        });
+
+        if (!option) {
+            option = document.createElement('li');
+            option.className = 'dropdown-item';
+            option.setAttribute('role', 'option');
+            option.setAttribute('data-value', config.url);
+            option.textContent = config.label;
+            listbox.appendChild(option);
+        }
+
+        if (!option.dataset.gradefillerBound) {
+            option.tabIndex = 0;
+
+            var navigate = function(event) {
+                if (event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ') {
+                    return;
+                }
+                event.preventDefault();
+                window.location.href = config.url;
+            };
+
+            option.addEventListener('click', navigate);
+            option.addEventListener('keydown', navigate);
+            option.dataset.gradefillerBound = '1';
+        }
 
         if (window.location.pathname.indexOf('/local/gradefiller/gradeexport.php') !== -1) {
-            selector.value = config.url;
-        }
+            input.value = config.url;
 
-        if (!selector.dataset.gradefillerBound) {
-            selector.addEventListener('change', function() {
-                if (selector.value && selector.value !== window.location.href) {
-                    window.location.href = selector.value;
-                }
+            listbox.querySelectorAll('.dropdown-item[role="option"]').forEach(function(item) {
+                item.removeAttribute('aria-selected');
             });
-            selector.dataset.gradefillerBound = '1';
+            option.setAttribute('aria-selected', 'true');
+
+            var selected = toggle.querySelector('[data-selected-option]');
+            if (selected) {
+                selected.textContent = config.label;
+            } else {
+                toggle.textContent = config.label;
+            }
         }
     };
 
@@ -70,6 +107,9 @@ define([], function() {
             window.setTimeout(function() {
                 injectOption(config);
             }, 50);
+            window.setTimeout(function() {
+                injectOption(config);
+            }, 300);
         }
     };
 });

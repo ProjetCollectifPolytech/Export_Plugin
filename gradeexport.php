@@ -36,8 +36,7 @@ if (!$course = $DB->get_record('course', ['id' => $id])) {
 require_login($course);
 $context = context_course::instance($id);
 
-require_capability('moodle/grade:export', $context);
-if (!local_gradefiller_user_can_process($context)) {
+if (!local_gradefiller_can_access_grade_export_bridge($context)) {
     throw new \moodle_exception('error_no_permission', 'local_gradefiller');
 }
 

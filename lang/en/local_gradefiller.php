@@ -33,6 +33,7 @@ $string['gradefiller:process'] = 'Process spreadsheets with Grade Filler';
 $string['gradefiller:use'] = 'Use Grade Filler to fill grades in a spreadsheet';
 
 // Driver names.
+$string['driver_anonymousgrader'] = 'Anonymous Grader';
 $string['driver_offlinequiz'] = 'Offline Quiz (Anonymous)';
 $string['driver_papergrade'] = 'Papergrade (Scanner)';
 

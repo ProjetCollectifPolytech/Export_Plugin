@@ -33,6 +33,7 @@ $string['gradefiller:process'] = 'Traiter des tableurs avec Grade Filler';
 $string['gradefiller:use'] = 'Utiliser Grade Filler pour remplir les notes dans un tableur';
 
 // Driver names.
+$string['driver_anonymousgrader'] = 'Anonymous Grader';
 $string['driver_offlinequiz'] = 'Test hors ligne (anonyme)';
 $string['driver_papergrade'] = 'Papergrade (scanner)';
 

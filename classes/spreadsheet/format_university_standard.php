@@ -139,10 +139,10 @@ class format_university_standard implements spreadsheet_format_interface {
      * @throws \moodle_exception
      */
     public function write_grades(string $filepath, array $grades): string {
-        global $CFG;
+        // Validate the file extension before touching the workbook.
+        $extension = $this->validate_extension($filepath);
 
         // 1. Préparation du fichier de sortie
-        $extension = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
         $tempdir = make_temp_directory('gradefiller');
         $outputfile = $tempdir . '/' . 'filled_' . time() . '.' . $extension;
 
@@ -241,10 +241,7 @@ class format_university_standard implements spreadsheet_format_interface {
      */
     public function validate_file(string $filepath): bool {
         try {
-            $extension = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
-            if (!in_array($extension, self::ALLOWED_EXTENSIONS, true)) {
-                throw new \moodle_exception('error_unsupported_extension', 'local_gradefiller', '', $extension);
-            }
+            $this->validate_extension($filepath);
 
             $spreadsheet = IOFactory::load($filepath);
             $sheet = $spreadsheet->getActiveSheet();
@@ -281,5 +278,21 @@ class format_university_standard implements spreadsheet_format_interface {
         } catch (\Exception $e) {
             throw new \moodle_exception('error_format_invalid', 'local_gradefiller', '', null, $e->getMessage());
         }
+    }
+
+    /**
+     * Validate and return the spreadsheet extension supported by this format.
+     *
+     * @param string $filepath Path to the spreadsheet file
+     * @return string
+     * @throws \moodle_exception
+     */
+    private function validate_extension(string $filepath): string {
+        $extension = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
+        if (!in_array($extension, self::ALLOWED_EXTENSIONS, true)) {
+            throw new \moodle_exception('error_unsupported_extension', 'local_gradefiller', '', $extension);
+        }
+
+        return $extension;
     }
 }

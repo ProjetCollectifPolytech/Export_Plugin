@@ -29,26 +29,17 @@ use local_gradefiller\gradefiller_testcase;
 final class gradebook_export_builder_test extends gradefiller_testcase {
 
     public function test_build_export_data_returns_one_row_per_enrolled_user(): void {
-        global $DB;
-
         $this->resetAfterTest();
         $this->setAdminUser();
 
         $course = $this->getDataGenerator()->create_course();
         $student = $this->getDataGenerator()->create_and_enrol($course, 'student');
 
-        $label = $this->getDataGenerator()->create_module('label', ['course' => $course->id, 'name' => 'Bridge label']);
-        $cm = get_coursemodule_from_instance('label', $label->id, $course->id, false, MUST_EXIST);
+        $cm = $this->create_label_cm($course);
         $gradeitem = $this->create_grade_item_for_cm($course, $cm, 20.0);
 
-        $gradegrade = new \grade_grade([
-            'itemid' => $gradeitem->id,
-            'userid' => $student->id,
-            'finalgrade' => 14.5,
-            'rawgrade' => 14.5,
-            'rawgrademax' => 20.0,
-        ]);
-        $gradegrade->insert();
+        $this->assign_grade_to_item($gradeitem, $student->id, 14.5);
+        grade_regrade_final_grades($course->id);
 
         $formdata = (object) [
             'itemids' => [$gradeitem->id => 1],

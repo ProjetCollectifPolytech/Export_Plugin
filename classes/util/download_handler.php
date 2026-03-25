@@ -24,12 +24,15 @@
 
 namespace local_gradefiller\util;
 
+defined('MOODLE_INTERNAL') || die();
+
 /**
  * Download handler utility class
  *
  * Handles file download with proper HTTP headers.
  */
 class download_handler {
+
     /**
      * MIME type mappings for common spreadsheet formats
      */

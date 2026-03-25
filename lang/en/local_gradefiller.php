@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * English language strings for local_gradefiller
+ * English language strings for local_gradefiller.
  *
  * @package    local_gradefiller
  * @copyright  2026
@@ -28,11 +28,13 @@ $string['pluginname'] = 'Grade Filler';
 $string['fill_grades'] = 'Fill grades in a spreadsheet';
 
 // Capabilities.
-$string['gradefiller:use'] = 'Use grade filler to fill grades in a spreadsheet';
+$string['gradefiller:view'] = 'View Grade Filler';
+$string['gradefiller:process'] = 'Process spreadsheets with Grade Filler';
+$string['gradefiller:use'] = 'Use Grade Filler to fill grades in a spreadsheet';
 
 // Driver names.
 $string['driver_offlinequiz'] = 'Offline Quiz (Anonymous)';
-$string['driver_anonymousgrader'] = 'Anonymous Grader (Scanner)';
+$string['driver_papergrade'] = 'Papergrade (Scanner)';
 
 // Page.
 $string['page_title'] = 'Fill Grades in a Spreadsheet';
@@ -40,13 +42,14 @@ $string['activity_info'] = 'Activity Information';
 $string['activity'] = 'Activity';
 $string['type'] = 'Type';
 $string['anonymous_supported'] = 'Anonymous grades supported';
+$string['read_only_notice'] = 'You can view this page, but you do not have permission to process spreadsheets.';
 
 // Upload form.
 $string['upload_spreadsheet'] = 'Upload Your Spreadsheet';
 $string['spreadsheet_file'] = 'Spreadsheet file';
 $string['drag_drop_zone'] = 'Drag and drop your file here';
 $string['or_click_to_select'] = 'or click to select a file';
-$string['file_formats_accepted'] = 'Accepted formats: XLSX, XLS, XLSM, ODS, CSV';
+$string['file_formats_accepted'] = 'Accepted formats: XLSX, XLSM';
 
 $string['spreadsheet_format'] = 'Spreadsheet format';
 $string['select_format'] = '-- Select format --';
@@ -60,7 +63,7 @@ $string['grade_source_help'] = 'Choose how to match identifiers in your file';
 $string['btn_process_download'] = 'Process and Download Filled File';
 
 // Formats.
-$string['format_university_standard_name'] = 'Apogé';
+$string['format_university_standard_name'] = 'Apogee';
 $string['format_university_standard_desc'] = 'Skip 17 header rows, Column A = ID, Column E = Grade';
 
 // Help.
@@ -73,8 +76,20 @@ $string['help_step4'] = 'The plugin will fill the grades and download the comple
 // Messages.
 $string['file_processed'] = 'File processed: {$a->matched} grades filled, {$a->unmatched} not found';
 
+// Events.
+$string['event_page_viewed'] = 'Grade Filler page viewed';
+$string['event_file_processed'] = 'Grade Filler spreadsheet processed';
+
+// Privacy.
+$string['privacy:metadata'] = 'The Grade Filler plugin does not store personal data.';
+
 // Errors.
+$string['error_activity_unsupported'] = 'This activity does not support Grade Filler.';
+$string['error_invalid_action'] = 'Invalid action requested.';
+$string['error_invalid_grade_source'] = 'Invalid grade source selected.';
+$string['error_post_required'] = 'A POST request is required for this action.';
 $string['error_no_file'] = 'No file uploaded';
+$string['error_moving_file'] = 'The uploaded file could not be moved to temporary storage';
 $string['error_format_not_found'] = 'Format not found: {$a}';
 $string['error_reading_file'] = 'Error reading file: {$a}';
 $string['error_writing_file'] = 'Error writing file: {$a}';
@@ -83,5 +98,4 @@ $string['error_format_insufficient_rows'] = 'File must have at least {$a} rows';
 $string['error_format_no_identifiers'] = 'No identifiers found in the expected column';
 $string['error_no_permission'] = 'You do not have permission to access this page';
 $string['error_no_grade_item'] = 'This activity does not have a grade item';
-$string['invalidaction'] = 'Invalid action requested';
-$string['error_unsupported_write_format'] = 'File format "{$a}" is not supported for writing. Please use .xlsx or .xlsm.';
+$string['error_unsupported_extension'] = 'Unsupported file extension: {$a}. Use XLSX or XLSM.';

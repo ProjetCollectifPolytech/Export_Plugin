@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Process upload action handler
+ * Process upload action handler.
  *
  * @package    local_gradefiller
  * @copyright  2026
@@ -24,45 +24,46 @@
 
 namespace local_gradefiller\action;
 
-use local_gradefiller\util\file_handler;
+use Exception;
 use local_gradefiller\util\download_handler;
+use local_gradefiller\util\file_handler;
+use moodle_exception;
+
+defined('MOODLE_INTERNAL') || die();
 
 /**
- * Handles the file upload and processing action
+ * Handles the file upload and processing action.
  *
  * This action:
- * 1. Validates the uploaded file
- * 2. Processes it with the selected format and grade source
- * 3. Sends the filled spreadsheet for download
+ * 1. Validates the POST request and selected grade source
+ * 2. Moves the uploaded file to Moodle temp storage
+ * 3. Processes it with the selected format and grade source
+ * 4. Triggers an audit event
+ * 5. Sends the filled spreadsheet for download
  */
 class process_upload extends base_action {
+
     /**
-     * Execute the upload processing action
+     * Execute the upload processing action.
      *
      * This method terminates script execution after sending the file.
      *
      * @return void
      */
     public function execute(): void {
-        // Get form parameters.
+        $this->require_post_request();
+
         $formatkey = required_param('format', PARAM_ALPHANUMEXT);
         $gradesource = required_param('gradesource', PARAM_ALPHA);
-
-        // Check if file was uploaded.
-        if (!isset($_FILES['spreadsheet']) || $_FILES['spreadsheet']['error'] !== UPLOAD_ERR_OK) {
-            throw new \moodle_exception('error_no_file', 'local_gradefiller');
+        if (!$this->manager->is_supported_grade_source($this->cm, $gradesource)) {
+            throw new moodle_exception('error_invalid_grade_source', 'local_gradefiller');
         }
 
         $tempfile = null;
 
         try {
-            // Move uploaded file to temp directory with unique name to avoid collisions.
-            $tempdir = make_temp_directory('gradefiller');
-            $originalext = strtolower(pathinfo($_FILES['spreadsheet']['name'], PATHINFO_EXTENSION));
-            $tempfile = $tempdir . '/' . uniqid('upload_', true) . '.' . $originalext;
-            move_uploaded_file($_FILES['spreadsheet']['tmp_name'], $tempfile);
+            $tempfile = file_handler::handle_upload('spreadsheet');
 
-            // Process file.
             $result = $this->manager->process_file(
                 $tempfile,
                 $formatkey,
@@ -71,22 +72,29 @@ class process_upload extends base_action {
                 $gradesource
             );
 
-            // Cleanup the original uploaded temp file.
-            if (file_exists($tempfile)) {
-                @unlink($tempfile);
-            }
+            \local_gradefiller\event\file_processed::create([
+                'objectid' => $this->cmid,
+                'courseid' => $this->course->id,
+                'context' => $this->context,
+                'other' => [
+                    'format' => $formatkey,
+                    'gradesource' => $gradesource,
+                    'total' => $result['stats']['total'],
+                    'matched' => $result['stats']['matched'],
+                    'unmatched' => $result['stats']['unmatched'],
+                    'errors' => $result['stats']['errors'],
+                ],
+            ])->trigger();
 
-            // Detect file extension and generate download filename.
             $extension = strtolower(pathinfo($result['filepath'], PATHINFO_EXTENSION));
             $downloadname = download_handler::generate_filename('filled_grades', $extension);
 
-            // Send file for download (this terminates execution).
+            file_handler::cleanup($tempfile);
+            $tempfile = null;
+
             download_handler::send_file($result['filepath'], $downloadname);
-        } catch (\Exception $e) {
-            // Cleanup on error.
-            if ($tempfile && file_exists($tempfile)) {
-                @unlink($tempfile);
-            }
+        } catch (Exception $e) {
+            file_handler::cleanup($tempfile ?? '');
             throw $e;
         }
     }

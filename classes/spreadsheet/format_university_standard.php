@@ -49,14 +49,17 @@ use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
  * @package    local_gradefiller
  */
 class format_university_standard implements spreadsheet_format_interface {
+    /** @var string[] Supported file extensions for this format */
+    private const ALLOWED_EXTENSIONS = ['xlsx', 'xlsm'];
+
     /** @var int Number of header rows to skip */
     const HEADER_ROWS = 17;
 
     /** @var int Column index for identifier (0-based) */
-    const COLUMN_IDENTIFIER = 0; // Column A.
+    const COLUMN_IDENTIFIER = 0; // Column A
 
     /** @var int Column index for grade (0-based) */
-    const COLUMN_GRADE = 4; // Column E.
+    const COLUMN_GRADE = 4; // Column E
 
     /**
      * Get the human-readable name of this format
@@ -96,12 +99,12 @@ class format_university_standard implements spreadsheet_format_interface {
         try {
             $spreadsheet = IOFactory::load($filepath);
             $sheet = $spreadsheet->getActiveSheet();
-            $highestrow = $sheet->getHighestRow();
+            $highestRow = $sheet->getHighestRow();
 
             $identifiers = [];
-            for ($row = self::HEADER_ROWS + 1; $row <= $highestrow; $row++) {
+            for ($row = self::HEADER_ROWS + 1; $row <= $highestRow; $row++) {
                 $identifier = $sheet->getCellByColumnAndRow(
-                    self::COLUMN_IDENTIFIER + 1,
+                    self::COLUMN_IDENTIFIER + 1, 
                     $row
                 )->getValue();
 
@@ -120,6 +123,7 @@ class format_university_standard implements spreadsheet_format_interface {
             }
 
             return $identifiers;
+
         } catch (\Exception $e) {
             throw new \moodle_exception('error_reading_file', 'local_gradefiller', '', null, $e->getMessage());
         }
@@ -137,29 +141,23 @@ class format_university_standard implements spreadsheet_format_interface {
     public function write_grades(string $filepath, array $grades): string {
         global $CFG;
 
-        // 1. Prepare the output file.
+        // 1. Préparation du fichier de sortie
         $extension = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
-
-        // Validate that the file format supports ZipArchive-based writing.
-        $supportedwriteformats = ['xlsx', 'xlsm'];
-        if (!in_array($extension, $supportedwriteformats)) {
-            throw new \moodle_exception('error_unsupported_write_format', 'local_gradefiller', '', $extension);
-        }
         $tempdir = make_temp_directory('gradefiller');
-        $outputfile = $tempdir . '/' . 'filled_' . uniqid('', true) . '.' . $extension;
+        $outputfile = $tempdir . '/' . 'filled_' . time() . '.' . $extension;
 
-        // Copy the original file (never modify the original).
+        // On copie le fichier original (ne jamais travailler sur l'original)
         if (!copy($filepath, $outputfile)) {
             throw new \moodle_exception('error_writing_file', 'local_gradefiller', '', null, 'Could not copy temp file');
         }
 
-        // 2. Use ZipArchive to open the .xlsm without corrupting it.
+        // 2. Utilisation de ZipArchive pour ouvrir le .xlsm sans le corrompre
         $zip = new \ZipArchive();
         if ($zip->open($outputfile) !== true) {
             throw new \moodle_exception('error_writing_file', 'local_gradefiller', '', null, 'Could not open XLSX/XLSM as ZIP');
         }
 
-        // Target the first worksheet (standard for this export type).
+        // On cible la première feuille de calcul (standard pour ce type d'export)
         $sheetname = 'xl/worksheets/sheet1.xml';
         $xmlstring = $zip->getFromName($sheetname);
 
@@ -168,18 +166,18 @@ class format_university_standard implements spreadsheet_format_interface {
             throw new \moodle_exception('error_writing_file', 'local_gradefiller', '', null, 'Could not find sheet1.xml');
         }
 
-        // 3. Manipulate the XML with DOMDocument.
+        // 3. Manipulation du XML avec DOMDocument
         $dom = new \DOMDocument();
-        // Prevent warnings on namespaces.
+        // Options pour éviter les warnings sur les namespaces
         $dom->preserveWhiteSpace = false;
-        $dom->formatOutput = false;
+        $dom->formatOutput = false; 
         $dom->loadXML($xmlstring);
 
         $xpath = new \DOMXPath($dom);
-        // Register the default Excel namespace.
+        // Enregistrement du namespace par défaut d'Excel
         $xpath->registerNamespace('x', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main');
 
-        // Build a map for fast access: [row_number => grade].
+        // Création d'une map pour accès rapide : [row_number => grade]
         $grademap = [];
         foreach ($grades as $grade) {
             if (isset($grade->row_number) && isset($grade->grade)) {
@@ -187,44 +185,48 @@ class format_university_standard implements spreadsheet_format_interface {
             }
         }
 
-        // 4. Iterate and update cells.
-        // Find all rows that are in our map.
+        // 4. Parcours et mise à jour des cellules
+        // On cherche toutes les lignes qui sont dans notre map
         foreach ($grademap as $rownum => $gradeval) {
-            // Column E is the 5th letter. In Excel XML the reference is "E18" for row 18.
+            // La colonne E correspond à la 5ème lettre. Dans le XML Excel, la référence est "E18" pour la ligne 18.
             $cellref = 'E' . $rownum;
 
-            // Search for the specific cell.
-            // Note: look for <c> tag with attribute r="E{row}".
+            // Recherche de la cellule spécifique
+            // Note: On cherche la balise <c> avec l'attribut r="E{row}"
             $entries = $xpath->query("//x:c[@r='$cellref']");
 
             if ($entries->length > 0) {
                 $cell = $entries->item(0);
 
-                // Remove the 't' (type) attribute if present to avoid shared-string type.
-                // We want a plain numeric value.
+                // On supprime l'attribut 't' (type) s'il existe (pour éviter le type 's' string partagée)
+                // On veut que ce soit un nombre direct
                 if ($cell->hasAttribute('t')) {
                     $cell->removeAttribute('t');
                 }
 
-                // Look for the <v> (value) tag inside the cell.
+                // On cherche la balise <v> (valeur) à l'intérieur de la cellule
                 $valuenodes = $xpath->query("x:v", $cell);
-
+                
                 if ($valuenodes->length > 0) {
-                    // Update the existing value.
+                    // Mise à jour de la valeur existante
                     $valuenodes->item(0)->nodeValue = $gradeval;
                 } else {
-                    // Create the value tag if it does not exist (empty cell).
+                    // Création de la balise valeur si elle n'existe pas (cellule vide)
                     $v = $dom->createElement('v', $gradeval);
                     $cell->appendChild($v);
                 }
+            } else {
+                // Si la cellule n'existe pas, c'est plus complexe (il faut créer la row ou la cell).
+                // Pour un template universitaire, on suppose que les lignes existent déjà (pré-remplies avec les IDs).
+                // On log juste pour debug si besoin.
             }
         }
 
-        // 5. Save the modified XML back into the ZIP.
+        // 5. Sauvegarde du XML modifié dans le ZIP
         $newxml = $dom->saveXML();
         $zip->addFromString($sheetname, $newxml);
-
-        // Close and finalise.
+        
+        // Fermeture et finalisation
         $zip->close();
 
         return $outputfile;
@@ -239,12 +241,17 @@ class format_university_standard implements spreadsheet_format_interface {
      */
     public function validate_file(string $filepath): bool {
         try {
+            $extension = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
+            if (!in_array($extension, self::ALLOWED_EXTENSIONS, true)) {
+                throw new \moodle_exception('error_unsupported_extension', 'local_gradefiller', '', $extension);
+            }
+
             $spreadsheet = IOFactory::load($filepath);
             $sheet = $spreadsheet->getActiveSheet();
-            $highestrow = $sheet->getHighestRow();
+            $highestRow = $sheet->getHighestRow();
 
             // Check if there are enough rows.
-            if ($highestrow <= self::HEADER_ROWS) {
+            if ($highestRow <= self::HEADER_ROWS) {
                 throw new \moodle_exception(
                     'error_format_insufficient_rows',
                     'local_gradefiller',
@@ -255,7 +262,7 @@ class format_university_standard implements spreadsheet_format_interface {
 
             // Check if column A has data after header rows.
             $hasdata = false;
-            for ($row = self::HEADER_ROWS + 1; $row <= min($highestrow, self::HEADER_ROWS + 10); $row++) {
+            for ($row = self::HEADER_ROWS + 1; $row <= min($highestRow, self::HEADER_ROWS + 10); $row++) {
                 $value = $sheet->getCellByColumnAndRow(self::COLUMN_IDENTIFIER + 1, $row)->getValue();
                 if (!empty(trim($value))) {
                     $hasdata = true;
@@ -268,6 +275,7 @@ class format_university_standard implements spreadsheet_format_interface {
             }
 
             return true;
+
         } catch (\moodle_exception $e) {
             throw $e;
         } catch (\Exception $e) {

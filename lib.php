@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Library functions for local_gradefiller
+ * Library functions for local_gradefiller.
  *
  * @package    local_gradefiller
  * @copyright  2026
@@ -27,108 +27,190 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->libdir . '/gradelib.php');
 
 /**
- * Extend the module navigation with a link to grade filler
+ * Check whether the current user can view Grade Filler.
  *
- * @param settings_navigation $settingsnav The settings navigation object
- * @param navigation_node $node The navigation node to extend
+ * Supports the new split capabilities while remaining compatible with the
+ * legacy local/gradefiller:use capability.
+ *
+ * @param context $context Context to check
+ * @return bool
  */
-function local_gradefiller_extend_settings_navigation($settingsnav, $node) {
-    global $PAGE, $DB, $CFG;
+function local_gradefiller_user_can_view(context $context): bool {
+    return has_capability('local/gradefiller:view', $context)
+        || has_capability('local/gradefiller:use', $context);
+}
 
-    // Only on module pages.
-    if ($PAGE->cm === null) {
-        return;
+/**
+ * Check whether the current user can process files in Grade Filler.
+ *
+ * Supports the new split capabilities while remaining compatible with the
+ * legacy local/gradefiller:use capability.
+ *
+ * @param context $context Context to check
+ * @return bool
+ */
+function local_gradefiller_user_can_process(context $context): bool {
+    return has_capability('local/gradefiller:process', $context)
+        || has_capability('local/gradefiller:use', $context);
+}
+
+/**
+ * Resolve activity access metadata for Grade Filler links and buttons.
+ *
+ * @param \stdClass|\cm_info $cm Course module
+ * @param context_course $coursecontext Course context
+ * @return array|null
+ */
+function local_gradefiller_get_activity_access_data($cm, context_course $coursecontext): ?array {
+    $modulecontext = context_module::instance($cm->id);
+    if (!local_gradefiller_user_can_view($modulecontext)) {
+        return null;
     }
 
-    $cm = $PAGE->cm;
-    $course = $PAGE->course;
-
-    $coursecontext = context_course::instance($course->id);
-
-    // Check if user has permission.
-    if (!has_capability('local/gradefiller:use', $coursecontext)) {
-        return;
-    }
-
-    // Check if this activity can store grades (has grade item OR has anonymous driver support).
+    $manager = new \local_gradefiller\manager();
     $gradeitem = grade_item::fetch([
         'itemtype' => 'mod',
         'itemmodule' => $cm->modname,
         'iteminstance' => $cm->instance,
-        'courseid' => $course->id,
+        'courseid' => $coursecontext->instanceid,
     ]);
-
-    // Check if there's a driver that supports anonymous grades for this activity.
-    $manager = new \local_gradefiller\manager();
     $driver = $manager->get_driver_for_cm($cm);
-    $hasdriver = ($driver !== null);
 
-    // Show link if activity has grade item OR has anonymous driver support.
-    if (!$gradeitem && !$hasdriver) {
+    if (!$gradeitem && $driver === null) {
+        return null;
+    }
+
+    return [
+        'label' => get_string('fill_grades', 'local_gradefiller'),
+        'url' => new moodle_url('/local/gradefiller/index.php', ['id' => $cm->id]),
+        'nodekey' => 'gradefiller_fill',
+        'icon' => new pix_icon('i/grades', ''),
+        'can_process' => local_gradefiller_user_can_process($modulecontext),
+        'has_grade_item' => (bool)$gradeitem,
+        'supports_anonymous' => ($driver !== null),
+        'driver_name' => $driver ? $driver->get_name() : '',
+    ];
+}
+
+/**
+ * Determine whether the current page should display a prominent activity button.
+ *
+ * @return bool
+ */
+function local_gradefiller_should_add_activity_button(): bool {
+    global $PAGE;
+
+    if (empty($PAGE->cm) || empty($PAGE->activityname)) {
+        return false;
+    }
+
+    if ((int)$PAGE->context->contextlevel !== CONTEXT_MODULE) {
+        return false;
+    }
+
+    return str_starts_with((string)$PAGE->pagetype, 'mod-' . $PAGE->activityname . '-');
+}
+
+/**
+ * Add a visible page button for supported activity pages.
+ *
+ * @param array $accessdata Access data returned by local_gradefiller_get_activity_access_data()
+ * @return void
+ */
+function local_gradefiller_add_activity_button(array $accessdata): void {
+    global $PAGE;
+
+    if (strpos((string)$PAGE->button, 'local-gradefiller-activity-button') !== false) {
         return;
     }
 
-    // Add link to activity administration block.
+    $buttonlink = html_writer::link(
+        $accessdata['url'],
+        $accessdata['label'],
+        ['class' => 'btn btn-primary']
+    );
+    $buttonhtml = html_writer::div($buttonlink, 'singlebutton local-gradefiller-activity-button');
+
+    $PAGE->set_button($buttonhtml . (string)$PAGE->button);
+}
+
+/**
+ * Extend the activity settings navigation with a Grade Filler link.
+ *
+ * @param settings_navigation $settingsnav The settings navigation object
+ * @param context $context The current page context
+ * @return void
+ */
+function local_gradefiller_extend_settings_navigation($settingsnav, $context) {
+    global $PAGE;
+
+    if ($PAGE->cm === null || $PAGE->course === null) {
+        return;
+    }
+
+    $coursecontext = context_course::instance($PAGE->course->id);
+    $accessdata = local_gradefiller_get_activity_access_data($PAGE->cm, $coursecontext);
+    if ($accessdata === null) {
+        return;
+    }
+
+    if (local_gradefiller_should_add_activity_button()) {
+        local_gradefiller_add_activity_button($accessdata);
+    }
+
     if ($settingsnode = $settingsnav->find('modulesettings', navigation_node::TYPE_SETTING)) {
-        $url = new moodle_url('/local/gradefiller/index.php', [
-            'id' => $cm->id,
-        ]);
-        $settingsnode->add(
-            get_string('fill_grades', 'local_gradefiller'),
-            $url,
-            navigation_node::TYPE_SETTING,
-            null,
-            'gradefiller_fill',
-            new pix_icon('i/grades', '')
-        );
+        if (!$settingsnode->find($accessdata['nodekey'], navigation_node::TYPE_SETTING)) {
+            $settingsnode->add(
+                $accessdata['label'],
+                $accessdata['url'],
+                navigation_node::TYPE_SETTING,
+                null,
+                $accessdata['nodekey'],
+                $accessdata['icon']
+            );
+        }
     }
 }
 
 /**
- * Extend the navigation of an activity module
- * Adds a direct link in the secondary navigation
+ * Add link to secondary navigation on supported activity pages.
+ *
+ * @param navigation_node $navigation The navigation node to extend
+ * @param stdClass $course The course object
+ * @param cm_info $cm The course module info object
+ * @return void
+ */
+function local_gradefiller_extend_navigation_module($navigation, $course, $cm) {
+    $coursecontext = context_course::instance($course->id);
+    $accessdata = local_gradefiller_get_activity_access_data($cm, $coursecontext);
+    if ($accessdata === null) {
+        return;
+    }
+
+    $navigation->add(
+        $accessdata['label'],
+        $accessdata['url'],
+        navigation_node::TYPE_CUSTOM,
+        null,
+        $accessdata['nodekey'],
+        $accessdata['icon']
+    );
+}
+
+/**
+ * Backward-compatible wrapper for older navigation integrations.
  *
  * @param navigation_node $navigation The navigation node to extend
  * @param stdClass $course The course object
  * @param context $context The context of the course
- * @param stdClass $cm The course module object
+ * @return void
  */
 function local_gradefiller_extend_navigation_course($navigation, $course, $context) {
     global $PAGE;
 
-    // Only show on activity pages.
     if ($PAGE->cm === null) {
         return;
     }
 
-    $cm = $PAGE->cm;
-
-    // Check permission.
-    if (!has_capability('local/gradefiller:use', $context)) {
-        return;
-    }
-
-    // Check if activity has grades.
-    $gradeitem = grade_item::fetch([
-        'itemtype' => 'mod',
-        'itemmodule' => $cm->modname,
-        'iteminstance' => $cm->instance,
-        'courseid' => $course->id,
-    ]);
-
-    if (!$gradeitem) {
-        return;
-    }
-
-    // Add link to main navigation.
-    $url = new moodle_url('/local/gradefiller/index.php', ['id' => $cm->id]);
-    $node = navigation_node::create(
-        get_string('fill_grades', 'local_gradefiller'),
-        $url,
-        navigation_node::TYPE_CUSTOM,
-        null,
-        'gradefiller',
-        new pix_icon('i/grades', '')
-    );
-    $navigation->add_node($node);
+    local_gradefiller_extend_navigation_module($navigation, $course, $PAGE->cm);
 }

@@ -14,18 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace local_gradefiller\privacy;
+
 /**
- * Version information for local_gradefiller
+ * Tests for the local_gradefiller privacy provider.
  *
  * @package    local_gradefiller
- * @copyright  2026
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+final class provider_test extends \advanced_testcase {
 
-defined('MOODLE_INTERNAL') || die();
+    public function test_provider_implements_null_provider(): void {
+        $interfaces = class_implements(provider::class);
 
-$plugin->component = 'local_gradefiller';
-$plugin->version = 2026032500;  // YYYYMMDDXX.
-$plugin->requires = 2023100900; // Moodle 4.3+.
-$plugin->maturity = MATURITY_ALPHA;
-$plugin->release = 'v1.1.0-alpha';
+        $this->assertArrayHasKey(\core_privacy\local\metadata\null_provider::class, $interfaces);
+    }
+
+    public function test_get_reason_returns_privacy_metadata_key(): void {
+        $this->assertSame('privacy:metadata', provider::get_reason());
+    }
+}

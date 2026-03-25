@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Base action handler class
+ * Base action handler class.
  *
  * @package    local_gradefiller
  * @copyright  2026
@@ -24,17 +24,22 @@
 
 namespace local_gradefiller\action;
 
+defined('MOODLE_INTERNAL') || die();
+
+require_once($CFG->dirroot . '/local/gradefiller/lib.php');
+
 use context_module;
 use local_gradefiller\manager;
 use moodle_url;
 
 /**
- * Abstract base class for action handlers
+ * Abstract base class for action handlers.
  *
  * Provides common functionality for all action handlers including
- * authentication, context setup, and manager instantiation.
+ * authentication, context setup, capability checks and redirect helpers.
  */
 abstract class base_action {
+
     /** @var int Course module ID */
     protected $cmid;
 
@@ -51,7 +56,7 @@ abstract class base_action {
     protected $manager;
 
     /**
-     * Constructor
+     * Constructor.
      *
      * @param int $cmid Course module ID
      */
@@ -65,22 +70,38 @@ abstract class base_action {
         $this->manager = new manager();
 
         require_login($this->course, false, $this->cm);
-        require_capability('local/gradefiller:use', $this->context);
+        if (!local_gradefiller_user_can_process($this->context)) {
+            require_capability('local/gradefiller:process', $this->context);
+        }
     }
 
     /**
-     * Execute the action
+     * Execute the action.
      *
      * @return void
      */
     abstract public function execute(): void;
 
     /**
-     * Get redirect URL for this action
+     * Get redirect URL for this action.
      *
      * @return moodle_url
      */
     protected function get_return_url(): moodle_url {
         return new moodle_url('/local/gradefiller/index.php', ['id' => $this->cmid]);
+    }
+
+    /**
+     * Require a valid POST request for state-changing actions.
+     *
+     * @return void
+     * @throws \moodle_exception
+     */
+    protected function require_post_request(): void {
+        if (!data_submitted()) {
+            throw new \moodle_exception('error_post_required', 'local_gradefiller');
+        }
+
+        require_sesskey();
     }
 }

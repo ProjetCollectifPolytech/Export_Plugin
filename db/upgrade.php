@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version information for local_gradefiller
+ * Upgrade script for local_gradefiller.
  *
  * @package    local_gradefiller
  * @copyright  2026
@@ -24,8 +24,15 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'local_gradefiller';
-$plugin->version = 2026032500;  // YYYYMMDDXX.
-$plugin->requires = 2023100900; // Moodle 4.3+.
-$plugin->maturity = MATURITY_ALPHA;
-$plugin->release = 'v1.1.0-alpha';
+/**
+ * Upgrade steps for local_gradefiller.
+ *
+ * Grade Filler remains stateless, so there are currently no schema changes to
+ * apply. The upgrade hook is added now to keep future migrations explicit.
+ *
+ * @param int $oldversion Previous installed version
+ * @return bool
+ */
+function xmldb_local_gradefiller_upgrade($oldversion) {
+    return true;
+}

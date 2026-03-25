@@ -24,6 +24,17 @@
 
 namespace local_gradefiller;
 
+use context_course;
+use Exception;
+use grade_grade;
+use grade_item;
+use local_gradefiller\source\grade_source_interface;
+use local_gradefiller\source\grade_source_offlinequiz;
+use local_gradefiller\source\grade_source_papergrade;
+use local_gradefiller\spreadsheet\format_university_standard;
+use local_gradefiller\spreadsheet\spreadsheet_format_interface;
+use moodle_exception;
+
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . '/gradelib.php');
@@ -41,6 +52,12 @@ require_once($CFG->libdir . '/gradelib.php');
  * @package    local_gradefiller
  */
 class manager {
+    /** @var string Standard grade source key */
+    public const GRADE_SOURCE_STANDARD = 'standard';
+
+    /** @var string Anonymous grade source key */
+    public const GRADE_SOURCE_ANONYMOUS = 'anonymous';
+
     /** @var array Cache of available spreadsheet formats */
     private $formats = null;
 
@@ -60,9 +77,9 @@ class manager {
         $this->formats = [];
 
         // Register built-in formats.
-        $this->formats[] = new \local_gradefiller\spreadsheet\format_university_standard();
+        $this->formats[] = new format_university_standard();
 
-        // Auto-discovery of additional formats can be added here.
+        // TODO: Add auto-discovery of additional formats from /local/gradefiller/classes/spreadsheet/format_*.php
 
         return $this->formats;
     }
@@ -73,7 +90,7 @@ class manager {
      * @param string $formatkey Format key
      * @return \local_gradefiller\spreadsheet\spreadsheet_format_interface|null
      */
-    public function get_format(string $formatkey): ?\local_gradefiller\spreadsheet\spreadsheet_format_interface {
+    public function get_format(string $formatkey): ?spreadsheet_format_interface {
         $formats = $this->get_available_formats();
 
         foreach ($formats as $format) {
@@ -98,9 +115,11 @@ class manager {
         $this->drivers = [];
 
         // Register built-in drivers.
-        $this->drivers[] = new \local_gradefiller\source\grade_source_offlinequiz();
+        $this->drivers[] = new grade_source_offlinequiz();
 
-        // Auto-discovery of additional drivers can be added here.
+        // The driver performs its own table checks and simply declines when
+        // local_papergrade is not installed for the current Moodle site.
+        $this->drivers[] = new grade_source_papergrade();
 
         return $this->drivers;
     }
@@ -111,7 +130,7 @@ class manager {
      * @param \cm_info $cm Course module
      * @return \local_gradefiller\source\grade_source_interface|null
      */
-    public function get_driver_for_cm($cm): ?\local_gradefiller\source\grade_source_interface {
+    public function get_driver_for_cm($cm): ?grade_source_interface {
         $drivers = $this->get_available_drivers();
 
         foreach ($drivers as $driver) {
@@ -121,6 +140,33 @@ class manager {
         }
 
         return null;
+    }
+
+    /**
+     * Get the supported grade sources for an activity.
+     *
+     * @param \stdClass|\cm_info $cm Course module
+     * @return array
+     */
+    public function get_supported_grade_sources($cm): array {
+        $sources = [self::GRADE_SOURCE_STANDARD];
+
+        if ($this->get_driver_for_cm($cm) !== null) {
+            $sources[] = self::GRADE_SOURCE_ANONYMOUS;
+        }
+
+        return $sources;
+    }
+
+    /**
+     * Check whether a grade source is supported for the given activity.
+     *
+     * @param \stdClass|\cm_info $cm Course module
+     * @param string $gradesource Grade source key
+     * @return bool
+     */
+    public function is_supported_grade_source($cm, string $gradesource): bool {
+        return in_array($gradesource, $this->get_supported_grade_sources($cm), true);
     }
 
     /**
@@ -143,10 +189,10 @@ class manager {
         $identifier = trim($identifier);
 
         // Strategy determination based on user selection.
-        if ($gradesource === 'standard') {
+        if ($gradesource === self::GRADE_SOURCE_STANDARD) {
             // Standard Moodle ID lookup.
             return $this->fetch_grade_from_standard($identifier, $cmid, $courseid);
-        } else if ($gradesource === 'anonymous') {
+        } else if ($gradesource === self::GRADE_SOURCE_ANONYMOUS) {
             // Anonymous driver lookup.
             return $this->fetch_grade_from_anonymous($identifier, $cmid);
         }
@@ -172,7 +218,7 @@ class manager {
         }
 
         // Check if user is enrolled in the course.
-        $context = \context_course::instance($courseid);
+        $context = context_course::instance($courseid);
         if (!is_enrolled($context, $user->id)) {
             return null;
         }
@@ -181,11 +227,11 @@ class manager {
         $cm = get_coursemodule_from_id('', $cmid, 0, false, MUST_EXIST);
 
         // Get grade item.
-        $gradeitem = \grade_item::fetch([
+        $gradeitem = grade_item::fetch([
             'itemtype' => 'mod',
             'itemmodule' => $cm->modname,
             'iteminstance' => $cm->instance,
-            'courseid' => $courseid,
+            'courseid' => $courseid
         ]);
 
         if (!$gradeitem) {
@@ -193,7 +239,7 @@ class manager {
         }
 
         // Get grade.
-        $grade = \grade_grade::fetch(['itemid' => $gradeitem->id, 'userid' => $user->id]);
+        $grade = grade_grade::fetch(['itemid' => $gradeitem->id, 'userid' => $user->id]);
 
         if ($grade && $grade->finalgrade !== null) {
             return (object)[
@@ -262,7 +308,7 @@ class manager {
         // Get format handler.
         $format = $this->get_format($formatkey);
         if (!$format) {
-            throw new \moodle_exception('error_format_not_found', 'local_gradefiller', '', $formatkey);
+            throw new moodle_exception('error_format_not_found', 'local_gradefiller', '', $formatkey);
         }
 
         // Validate file.
@@ -295,7 +341,7 @@ class manager {
                 } else {
                     $stats['unmatched']++;
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $stats['errors']++;
                 debugging('Error fetching grade for identifier ' . $item->identifier . ': ' . $e->getMessage());
             }

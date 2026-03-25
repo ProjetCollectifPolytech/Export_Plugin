@@ -7,19 +7,22 @@
 
 <div class="local-gradefiller-upload">
 
-    <!-- Activity Information -->
-    <div class="alert alert-info">
-        <h5>{{#str}}activity_info, local_gradefiller{{/str}}</h5>
-        <p>
-            <strong>{{#str}}activity, local_gradefiller{{/str}}:</strong> {{activity_name}}<br>
-            <strong>{{#str}}type, local_gradefiller{{/str}}:</strong> {{activity_type}}
-        </p>
-        {{#supports_anonymous}}
-        <p class="mb-0">
-            <i class="fa fa-check-circle text-success"></i>
-            {{#str}}anonymous_supported, local_gradefiller{{/str}}: <strong>{{driver_name}}</strong>
-        </p>
-        {{/supports_anonymous}}
+    <!-- Activity header card -->
+    <div class="card gf-header-card mb-3">
+        <div class="card-body py-2 px-3">
+            <div class="d-flex flex-wrap align-items-center" style="gap:.5rem 1rem;">
+                <div>
+                    <span class="h6 mb-0 font-weight-bold">{{activity_name}}</span>
+                    <span class="text-muted mx-1">&mdash;</span>
+                    <small class="text-muted">{{activity_type}}</small>
+                </div>
+                {{#supports_anonymous}}
+                <span class="badge badge-success" style="font-size:.8rem;padding:.3em .7em;">
+                    <i class="fa fa-check-circle mr-1"></i>{{driver_name}}
+                </span>
+                {{/supports_anonymous}}
+            </div>
+        </div>
     </div>
 
     <!-- Upload Form -->
@@ -28,6 +31,13 @@
             <h5 class="mb-0">{{#str}}upload_spreadsheet, local_gradefiller{{/str}}</h5>
         </div>
         <div class="card-body">
+            {{^can_process}}
+            <div class="alert alert-info">
+                {{#str}}read_only_notice, local_gradefiller{{/str}}
+            </div>
+            {{/can_process}}
+
+            {{#can_process}}
             <form method="post" action="{{wwwroot}}/local/gradefiller/index.php" enctype="multipart/form-data" id="gradefiller-form">
                 <input type="hidden" name="id" value="{{cmid}}">
                 <input type="hidden" name="action" value="process_upload">
@@ -38,7 +48,7 @@
                     <label for="spreadsheet">{{#str}}spreadsheet_file, local_gradefiller{{/str}}</label>
                     <div class="file-drop-zone" id="file-drop-zone">
                         <input type="file" class="file-input" id="spreadsheet" name="spreadsheet" 
-                               accept=".xlsx,.xls,.xlsm,.ods,.csv" required>
+                               accept=".xlsx,.xlsm" required>
                         <div class="drop-zone-content">
                             <i class="fa fa-cloud-upload fa-3x text-muted mb-2"></i>
                             <p class="mb-1"><strong>{{#str}}drag_drop_zone, local_gradefiller{{/str}}</strong></p>
@@ -83,12 +93,12 @@
 
                 <!-- Submit Button -->
                 <div class="form-group">
-                    <button type="submit" class="btn btn-primary btn-lg">
-                        <i class="fa fa-download"></i>
-                        {{#str}}btn_process_download, local_gradefiller{{/str}}
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-download mr-1"></i>{{#str}}btn_process_download, local_gradefiller{{/str}}
                     </button>
                 </div>
             </form>
+            {{/can_process}}
         </div>
     </div>
 

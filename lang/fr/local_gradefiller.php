@@ -73,7 +73,7 @@ $string['grade_source_help'] = 'Choisissez comment faire correspondre les identi
 $string['btn_process_download'] = 'Traiter et télécharger le fichier rempli';
 
 // Formats.
-$string['format_university_standard_name'] = 'Apogee';
+$string['format_university_standard_name'] = 'Apogé';
 $string['format_university_standard_desc'] = 'Ignorer 17 lignes d\'en-tête, colonne A = ID, colonne E = note';
 $string['gradebook_export_format_workbook_name'] = 'Classeur modèle';
 $string['gradebook_export_format_workbook_desc'] = 'Téléversez un classeur XLSX ou XLSM. Grade Filler injecte l\'export Moodle classique dans une feuille nommée "Export Moodle".';

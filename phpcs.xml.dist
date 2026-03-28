@@ -15,5 +15,5 @@
     <file>lib.php</file>
     <file>version.php</file>
 
-    <rule ref="Moodle"/>
+    <rule ref="moodle"/>
 </ruleset>

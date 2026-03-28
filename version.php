@@ -26,6 +26,6 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_gradefiller';
 $plugin->version = 2026032502;  // YYYYMMDDXX.
-$plugin->requires = 2023100900; // Moodle 4.3+.
+$plugin->requires = 2024100700; // Moodle 4.5+.
 $plugin->maturity = MATURITY_ALPHA;
 $plugin->release = 'v1.2.0-alpha';

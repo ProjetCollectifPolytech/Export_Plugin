@@ -29,12 +29,16 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/grade/export/lib.php');
 require_once($CFG->libdir . '/formslib.php');
 
+use context_course;
+use grade_seq;
+use moodleform;
+
 /**
  * Gradebook export form for the Grade Filler bridge page.
  *
  * @package    local_gradefiller
  */
-class course_export_form extends \moodleform {
+class course_export_form extends moodleform {
 
     /**
      * Define the form fields.
@@ -51,9 +55,9 @@ class course_export_form extends \moodleform {
         $mform->setExpanded('gradeitems', true);
 
         $switch = grade_get_setting($course->id, 'aggregationposition', $CFG->grade_aggregationposition);
-        $sequence = new \grade_seq($course->id, $switch);
+        $sequence = new grade_seq($course->id, $switch);
         $needsmultiselect = false;
-        $canviewhidden = has_capability('moodle/grade:viewhidden', \context_course::instance($course->id));
+        $canviewhidden = has_capability('moodle/grade:viewhidden', context_course::instance($course->id));
 
         if ($gradeitems = $sequence->items) {
             foreach ($gradeitems as $gradeitem) {

@@ -25,6 +25,7 @@
 namespace local_gradefiller\action;
 
 use Exception;
+use local_gradefiller\event\file_processed;
 use local_gradefiller\util\download_handler;
 use local_gradefiller\util\file_handler;
 use moodle_exception;
@@ -72,7 +73,7 @@ class process_upload extends base_action {
                 $gradesource
             );
 
-            \local_gradefiller\event\file_processed::create([
+            file_processed::create([
                 'objectid' => $this->cmid,
                 'courseid' => $this->course->id,
                 'context' => $this->context,

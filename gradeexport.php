@@ -26,6 +26,15 @@ require_once(__DIR__ . '/../../config.php');
 require_once($CFG->dirroot . '/grade/export/lib.php');
 require_once($CFG->dirroot . '/local/gradefiller/lib.php');
 
+use core_form\util as form_util;
+use core_grades\output\export_action_bar;
+use local_gradefiller\export\course_export_manager;
+use local_gradefiller\export\course_spreadsheet_export_manager;
+use local_gradefiller\form\course_export_form;
+use local_gradefiller\manager;
+use local_gradefiller\util\download_handler;
+use local_gradefiller\util\file_handler;
+
 $id = required_param('id', PARAM_INT);
 $selectedspreadsheetkey = optional_param('spreadsheetformat', '', PARAM_ALPHANUMEXT);
 
@@ -36,14 +45,14 @@ if ($selectedspreadsheetkey !== '') {
 $PAGE->set_url('/local/gradefiller/gradeexport.php', $pageparams);
 
 if (!$course = $DB->get_record('course', ['id' => $id])) {
-    throw new \moodle_exception('invalidcourseid');
+    throw new moodle_exception('invalidcourseid');
 }
 
 require_login($course);
 $context = context_course::instance($id);
 
 if (!local_gradefiller_can_access_grade_export_bridge($context)) {
-    throw new \moodle_exception('error_no_permission', 'local_gradefiller');
+    throw new moodle_exception('error_no_permission', 'local_gradefiller');
 }
 
 export_verify_grades($course->id);
@@ -53,18 +62,18 @@ $PAGE->set_title(get_string('gradebook_export_page_title', 'local_gradefiller'))
 $PAGE->set_heading($course->fullname);
 $PAGE->set_pagetype('grade-export-gradefiller-index');
 
-$spreadsheetmanager = new \local_gradefiller\manager();
+$spreadsheetmanager = new manager();
 $selectedspreadsheet = null;
 if ($selectedspreadsheetkey !== '') {
     $selectedspreadsheet = $spreadsheetmanager->get_format($selectedspreadsheetkey);
     if ($selectedspreadsheet === null) {
-        throw new \moodle_exception('error_format_not_found', 'local_gradefiller', '', $selectedspreadsheetkey);
+        throw new moodle_exception('error_format_not_found', 'local_gradefiller', '', $selectedspreadsheetkey);
     }
 }
 
-$manager = new \local_gradefiller\export\course_export_manager();
+$manager = new course_export_manager();
 $formats = $manager->get_available_formats();
-$form = new \local_gradefiller\form\course_export_form(
+$form = new course_export_form(
     local_gradefiller_get_grade_export_url($id, $selectedspreadsheetkey ?: null),
     [
         'course' => $course,
@@ -77,7 +86,7 @@ $groupmode = groups_get_course_groupmode($course);
 $currentgroup = groups_get_course_group($course, true);
 if (($groupmode == SEPARATEGROUPS) && !$currentgroup && !has_capability('moodle/site:accessallgroups', $context)) {
     $activeplugin = local_gradefiller_get_grade_export_action_plugin($course->id);
-    $actionbar = new \core_grades\output\export_action_bar($context, null, $activeplugin);
+    $actionbar = new export_action_bar($context, null, $activeplugin);
     print_grade_page_head(
         $course->id,
         'export',
@@ -106,12 +115,12 @@ if ($data = $form->get_data()) {
     $tempfile = $tempdir . '/' . uniqid('gradeexport_', true) . '_' . clean_filename($originalfilename);
 
     if (!$form->save_file('templatefile', $tempfile, true)) {
-        throw new \moodle_exception('error_export_template_required', 'local_gradefiller');
+        throw new moodle_exception('error_export_template_required', 'local_gradefiller');
     }
 
     try {
         if ($selectedspreadsheet !== null) {
-            $result = (new \local_gradefiller\export\course_spreadsheet_export_manager())->process_export(
+            $result = (new course_spreadsheet_export_manager())->process_export(
                 $tempfile,
                 $selectedspreadsheet,
                 $course,
@@ -130,17 +139,17 @@ if ($data = $form->get_data()) {
             );
         }
 
-        \core_form\util::form_download_complete();
-        \local_gradefiller\util\file_handler::cleanup($tempfile);
-        \local_gradefiller\util\download_handler::send_file($result['filepath'], $result['downloadname']);
-    } catch (\Throwable $e) {
-        \local_gradefiller\util\file_handler::cleanup($tempfile);
+        form_util::form_download_complete();
+        file_handler::cleanup($tempfile);
+        download_handler::send_file($result['filepath'], $result['downloadname']);
+    } catch (Throwable $e) {
+        file_handler::cleanup($tempfile);
         throw $e;
     }
 }
 
 $activeplugin = local_gradefiller_get_grade_export_action_plugin($course->id);
-$actionbar = new \core_grades\output\export_action_bar($context, null, $activeplugin);
+$actionbar = new export_action_bar($context, null, $activeplugin);
 print_grade_page_head(
     $course->id,
     'export',

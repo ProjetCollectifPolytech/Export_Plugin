@@ -30,6 +30,8 @@ use grade_item;
 use local_gradefiller\manager;
 use local_gradefiller\spreadsheet\multi_activity_grade_aggregation_interface;
 use local_gradefiller\spreadsheet\spreadsheet_format_interface;
+use stdClass;
+use Throwable;
 
 /**
  * Fills a teacher spreadsheet directly from selected course grade items.
@@ -52,9 +54,9 @@ class course_spreadsheet_export_manager {
     public function process_export(
         string $filepath,
         spreadsheet_format_interface $spreadsheetformat,
-        \stdClass $course,
+        stdClass $course,
         int $groupid,
-        \stdClass $formdata,
+        stdClass $formdata,
         string $originalfilename
     ): array {
         $spreadsheetformat->validate_file($filepath);
@@ -113,9 +115,12 @@ class course_spreadsheet_export_manager {
                 } else {
                     $stats['unmatched']++;
                 }
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 $stats['errors']++;
-                debugging('Error aggregating grade for identifier ' . $identifierentry->identifier . ': ' . $e->getMessage());
+                debugging(
+                    'Grade Filler skipped identifier "' . $identifierentry->identifier . '" during aggregation: ' . $e->getMessage(),
+                    DEBUG_DEVELOPER
+                );
             }
         }
 
@@ -135,7 +140,7 @@ class course_spreadsheet_export_manager {
      * @param \stdClass $formdata Submitted form data
      * @return grade_item[]
      */
-    private function get_selected_grade_items(\stdClass $course, \stdClass $formdata): array {
+    private function get_selected_grade_items(stdClass $course, stdClass $formdata): array {
         $selecteditemids = array_keys(array_filter((array) ($formdata->itemids ?? [])));
         $gradeitems = [];
 
@@ -163,8 +168,8 @@ class course_spreadsheet_export_manager {
         spreadsheet_format_interface $spreadsheetformat,
         object $identifierentry,
         array $grades,
-        \stdClass $course,
-        \stdClass $formdata
+        stdClass $course,
+        stdClass $formdata
     ): ?float {
         if (empty($grades)) {
             return null;

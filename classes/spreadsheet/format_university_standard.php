@@ -15,9 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * University standard format implementation
- *
- * Format: Skip 17 lines, ID in Column A, Grade in Column E
+ * University standard format implementation.
  *
  * @package    local_gradefiller
  * @copyright  2026
@@ -30,21 +28,18 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . '/phpspreadsheet/vendor/autoload.php');
 
+use Exception;
+use moodle_exception;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\Writer\Xls;
-use PhpOffice\PhpSpreadsheet\Writer\Ods;
-use PhpOffice\PhpSpreadsheet\Writer\Csv;
-use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 /**
- * University standard format handler
+ * Spreadsheet strategy for the Apogee-like university template.
  *
  * This format expects:
- * - First 17 rows are header/metadata
- * - Column A (index 0) contains student identifiers
- * - Column E (index 4) should receive grades
+ * - 17 header rows
+ * - an identifier in one of the first early columns, with column A preferred
+ * - grades written back to column E in the first worksheet
  *
  * @package    local_gradefiller
  */
@@ -52,17 +47,20 @@ class format_university_standard implements spreadsheet_format_interface {
     /** @var string[] Supported file extensions for this format */
     private const ALLOWED_EXTENSIONS = ['xlsx', 'xlsm'];
 
+    /** @var string OpenXML worksheet path used by the template */
+    private const SHEET_XML_PATH = 'xl/worksheets/sheet1.xml';
+
+    /** @var string Grade column letter in the target worksheet */
+    private const GRADE_COLUMN_LETTER = 'E';
+
     /** @var int Number of header rows to skip */
-    const HEADER_ROWS = 17;
+    public const HEADER_ROWS = 17;
 
-    /** @var int Column index for identifier (0-based) */
-    const COLUMN_IDENTIFIER = 0; // Column A
-
-    /** @var int Column index for grade (0-based) */
-    const COLUMN_GRADE = 4; // Column E
+    /** @var int Preferred identifier column index (zero-based) */
+    private const COLUMN_IDENTIFIER = 0;
 
     /**
-     * Get the human-readable name of this format
+     * Get the human-readable name of this format.
      *
      * @return string
      */
@@ -71,7 +69,7 @@ class format_university_standard implements spreadsheet_format_interface {
     }
 
     /**
-     * Get the unique identifier for this format
+     * Get the stable key used to select this format.
      *
      * @return string
      */
@@ -80,7 +78,7 @@ class format_university_standard implements spreadsheet_format_interface {
     }
 
     /**
-     * Get the description of this format
+     * Get the human-readable description of this format.
      *
      * @return string
      */
@@ -89,7 +87,7 @@ class format_university_standard implements spreadsheet_format_interface {
     }
 
     /**
-     * Get the file extensions supported by this spreadsheet format.
+     * Return the file extensions accepted by this format.
      *
      * @return string[]
      */
@@ -98,7 +96,7 @@ class format_university_standard implements spreadsheet_format_interface {
     }
 
     /**
-     * Get the upload field label for this spreadsheet format.
+     * Return the label shown next to the upload control.
      *
      * @return string
      */
@@ -107,7 +105,7 @@ class format_university_standard implements spreadsheet_format_interface {
     }
 
     /**
-     * Get the descriptive upload help for this spreadsheet format.
+     * Return the help shown next to the upload control.
      *
      * @return string
      */
@@ -116,9 +114,8 @@ class format_university_standard implements spreadsheet_format_interface {
     }
 
     /**
-     * Course grade exports may combine standard gradebook items and anonymous
-     * activity-backed items, so Apogee prefers automatic identifier
-     * resolution in the multi-activity pipeline.
+     * Apogee-style workbooks may mix Moodle IDs and anonymous identifiers, so
+     * multi-activity exports let the spreadsheet pipeline auto-detect them.
      *
      * @return string
      */
@@ -127,156 +124,75 @@ class format_university_standard implements spreadsheet_format_interface {
     }
 
     /**
-     * Read identifiers from the spreadsheet
+     * Read identifiers from the spreadsheet.
      *
-     * @param string $filepath Path to the uploaded spreadsheet file
-     * @return array Array of objects with properties: identifier, row_number
-     * @throws \moodle_exception
+     * @param string $filepath
+     * @return array
      */
     public function read_identifiers(string $filepath): array {
         try {
             $spreadsheet = IOFactory::load($filepath);
             $sheet = $spreadsheet->getActiveSheet();
-            $highestRow = $sheet->getHighestRow();
-            $identifiercolumn = $this->resolve_identifier_column($sheet, $highestRow);
+            $highestrow = $sheet->getHighestRow();
+            $identifiercolumn = $this->resolve_identifier_column($sheet, $highestrow);
 
             $identifiers = [];
-            for ($row = self::HEADER_ROWS + 1; $row <= $highestRow; $row++) {
-                $identifier = $sheet->getCellByColumnAndRow(
-                    $identifiercolumn + 1,
-                    $row
-                )->getValue();
-
-                // Skip empty rows.
+            for ($row = self::HEADER_ROWS + 1; $row <= $highestrow; $row++) {
+                $identifier = $sheet->getCellByColumnAndRow($identifiercolumn + 1, $row)->getValue();
                 if (empty($identifier)) {
                     continue;
                 }
 
-                // Clean identifier.
-                $identifier = trim($identifier);
-
-                $identifiers[] = (object)[
-                    'identifier' => $identifier,
+                $identifiers[] = (object) [
+                    'identifier' => trim((string) $identifier),
                     'row_number' => $row,
                 ];
             }
 
             return $identifiers;
-
-        } catch (\Exception $e) {
-            throw new \moodle_exception('error_reading_file', 'local_gradefiller', '', null, $e->getMessage());
+        } catch (moodle_exception $e) {
+            throw $e;
+        } catch (Exception $e) {
+            throw new moodle_exception('error_file_read_failed', 'local_gradefiller');
         }
     }
 
     /**
-     * Write grades to the spreadsheet using direct XML manipulation (ZipArchive)
-     * This preserves Macros, VML, and ActiveX controls perfectly.
+     * Write grades back into the workbook template.
      *
-     * @param string $filepath Path to the original spreadsheet file
-     * @param array $grades Array of objects with properties: identifier, grade, row_number
-     * @return string Path to the filled spreadsheet file
-     * @throws \moodle_exception
+     * The workbook is copied first, then updated directly in OOXML form so
+     * existing workbook artefacts such as macros remain intact.
+     *
+     * @param string $filepath
+     * @param array $grades
+     * @return string
      */
     public function write_grades(string $filepath, array $grades): string {
-        // Validate the file extension before touching the workbook.
-        $extension = $this->validate_extension($filepath);
+        $this->validate_extension($filepath);
 
-        // 1. Préparation du fichier de sortie
-        $tempdir = make_temp_directory('gradefiller');
-        $outputfile = $tempdir . '/' . 'filled_' . time() . '.' . $extension;
-
-        // On copie le fichier original (ne jamais travailler sur l'original)
-        if (!copy($filepath, $outputfile)) {
-            throw new \moodle_exception('error_writing_file', 'local_gradefiller', '', null, 'Could not copy temp file');
-        }
-
-        // 2. Utilisation de ZipArchive pour ouvrir le .xlsm sans le corrompre
-        $zip = new \ZipArchive();
-        if ($zip->open($outputfile) !== true) {
-            throw new \moodle_exception('error_writing_file', 'local_gradefiller', '', null, 'Could not open XLSX/XLSM as ZIP');
-        }
-
-        // On cible la première feuille de calcul (standard pour ce type d'export)
-        $sheetname = 'xl/worksheets/sheet1.xml';
-        $xmlstring = $zip->getFromName($sheetname);
-
-        if (!$xmlstring) {
-            $zip->close();
-            throw new \moodle_exception('error_writing_file', 'local_gradefiller', '', null, 'Could not find sheet1.xml');
-        }
-
-        // 3. Manipulation du XML avec DOMDocument
-        $dom = new \DOMDocument();
-        // Options pour éviter les warnings sur les namespaces
-        $dom->preserveWhiteSpace = false;
-        $dom->formatOutput = false; 
-        $dom->loadXML($xmlstring);
-
-        $xpath = new \DOMXPath($dom);
-        // Enregistrement du namespace par défaut d'Excel
-        $xpath->registerNamespace('x', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main');
-
-        // Création d'une map pour accès rapide : [row_number => grade]
-        $grademap = [];
+        $cellvalues = [];
         foreach ($grades as $grade) {
-            if (isset($grade->row_number) && isset($grade->grade)) {
-                $grademap[$grade->row_number] = $grade->grade;
+            if (!isset($grade->row_number) || !isset($grade->grade)) {
+                continue;
             }
+
+            $cellvalues[self::GRADE_COLUMN_LETTER . (int) $grade->row_number] = $grade->grade;
         }
 
-        // 4. Parcours et mise à jour des cellules
-        // On cherche toutes les lignes qui sont dans notre map
-        foreach ($grademap as $rownum => $gradeval) {
-            // La colonne E correspond à la 5ème lettre. Dans le XML Excel, la référence est "E18" pour la ligne 18.
-            $cellref = 'E' . $rownum;
-
-            // Recherche de la cellule spécifique
-            // Note: On cherche la balise <c> avec l'attribut r="E{row}"
-            $entries = $xpath->query("//x:c[@r='$cellref']");
-
-            if ($entries->length > 0) {
-                $cell = $entries->item(0);
-
-                // On supprime l'attribut 't' (type) s'il existe (pour éviter le type 's' string partagée)
-                // On veut que ce soit un nombre direct
-                if ($cell->hasAttribute('t')) {
-                    $cell->removeAttribute('t');
-                }
-
-                // On cherche la balise <v> (valeur) à l'intérieur de la cellule
-                $valuenodes = $xpath->query("x:v", $cell);
-                
-                if ($valuenodes->length > 0) {
-                    // Mise à jour de la valeur existante
-                    $valuenodes->item(0)->nodeValue = $gradeval;
-                } else {
-                    // Création de la balise valeur si elle n'existe pas (cellule vide)
-                    $v = $dom->createElement('v', $gradeval);
-                    $cell->appendChild($v);
-                }
-            } else {
-                // Si la cellule n'existe pas, c'est plus complexe (il faut créer la row ou la cell).
-                // Pour un template universitaire, on suppose que les lignes existent déjà (pré-remplies avec les IDs).
-                // On log juste pour debug si besoin.
-            }
+        try {
+            return (new openxml_workbook_writer())->write_numeric_cells($filepath, self::SHEET_XML_PATH, $cellvalues);
+        } catch (moodle_exception $e) {
+            throw $e;
+        } catch (Exception $e) {
+            throw new moodle_exception('error_file_write_failed', 'local_gradefiller');
         }
-
-        // 5. Sauvegarde du XML modifié dans le ZIP
-        $newxml = $dom->saveXML();
-        $zip->addFromString($sheetname, $newxml);
-        
-        // Fermeture et finalisation
-        $zip->close();
-
-        return $outputfile;
     }
 
     /**
-     * Validate that the file can be processed by this format
+     * Validate that the workbook matches the expected format.
      *
-     * @param string $filepath Path to the spreadsheet file
-     * @return bool True if valid
-     * @throws \moodle_exception with detailed error message
+     * @param string $filepath
+     * @return bool
      */
     public function validate_file(string $filepath): bool {
         try {
@@ -284,53 +200,35 @@ class format_university_standard implements spreadsheet_format_interface {
 
             $spreadsheet = IOFactory::load($filepath);
             $sheet = $spreadsheet->getActiveSheet();
-            $highestRow = $sheet->getHighestRow();
-            $identifiercolumn = $this->resolve_identifier_column($sheet, $highestRow);
+            $highestrow = $sheet->getHighestRow();
+            $identifiercolumn = $this->resolve_identifier_column($sheet, $highestrow);
 
-            // Check if there are enough rows.
-            if ($highestRow <= self::HEADER_ROWS) {
-                throw new \moodle_exception(
-                    'error_format_insufficient_rows',
-                    'local_gradefiller',
-                    '',
-                    self::HEADER_ROWS + 1
-                );
+            if ($highestrow <= self::HEADER_ROWS) {
+                throw new moodle_exception('error_format_insufficient_rows', 'local_gradefiller', '', self::HEADER_ROWS + 1);
             }
 
-            // Check if column A has data after header rows.
-            $hasdata = false;
-            for ($row = self::HEADER_ROWS + 1; $row <= min($highestRow, self::HEADER_ROWS + 10); $row++) {
-                $value = $sheet->getCellByColumnAndRow($identifiercolumn + 1, $row)->getValue();
-                if (!empty(trim($value))) {
-                    $hasdata = true;
-                    break;
-                }
-            }
-
-            if (!$hasdata) {
-                throw new \moodle_exception('error_format_no_identifiers', 'local_gradefiller');
+            if (!$this->has_identifier_data($sheet, $identifiercolumn, $highestrow)) {
+                throw new moodle_exception('error_format_no_identifiers', 'local_gradefiller');
             }
 
             return true;
-
-        } catch (\moodle_exception $e) {
+        } catch (moodle_exception $e) {
             throw $e;
-        } catch (\Exception $e) {
-            throw new \moodle_exception('error_format_invalid', 'local_gradefiller', '', null, $e->getMessage());
+        } catch (Exception $e) {
+            throw new moodle_exception('error_format_invalid_generic', 'local_gradefiller');
         }
     }
 
     /**
-     * Validate and return the spreadsheet extension supported by this format.
+     * Validate and return the supported workbook extension.
      *
-     * @param string $filepath Path to the spreadsheet file
+     * @param string $filepath
      * @return string
-     * @throws \moodle_exception
      */
     private function validate_extension(string $filepath): string {
         $extension = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
         if (!in_array($extension, self::ALLOWED_EXTENSIONS, true)) {
-            throw new \moodle_exception('error_unsupported_extension', 'local_gradefiller', '', $extension);
+            throw new moodle_exception('error_unsupported_extension', 'local_gradefiller', '', $extension);
         }
 
         return $extension;
@@ -339,19 +237,15 @@ class format_university_standard implements spreadsheet_format_interface {
     /**
      * Resolve the identifier column used by the spreadsheet.
      *
-     * Apogee files usually store the identifier in column A, but some exports
-     * place the effective identifier values in another early column while
-     * keeping the same note column. We therefore keep column A as the preferred
-     * target and gracefully fall back to the first populated metadata column.
+     * Column A stays the preferred location, but some institutional exports put
+     * the effective identifier in another early column while keeping the same
+     * note column.
      *
-     * @param \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet
+     * @param Worksheet $sheet
      * @param int $highestrow
      * @return int
      */
-    private function resolve_identifier_column(
-        \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet,
-        int $highestrow
-    ): int {
+    private function resolve_identifier_column(Worksheet $sheet, int $highestrow): int {
         if ($this->count_identifier_candidates($sheet, self::COLUMN_IDENTIFIER, $highestrow) > 0) {
             return self::COLUMN_IDENTIFIER;
         }
@@ -370,20 +264,17 @@ class format_university_standard implements spreadsheet_format_interface {
     }
 
     /**
-     * Count the non-empty identifier-like cells in the first data rows.
+     * Count identifier-like values in the first data rows for one column.
      *
-     * @param \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet
-     * @param int $columnindex Zero-based column index
+     * @param Worksheet $sheet
+     * @param int $columnindex
      * @param int $highestrow
      * @return int
      */
-    private function count_identifier_candidates(
-        \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet,
-        int $columnindex,
-        int $highestrow
-    ): int {
+    private function count_identifier_candidates(Worksheet $sheet, int $columnindex, int $highestrow): int {
         $score = 0;
         $endrow = min($highestrow, self::HEADER_ROWS + 25);
+
         for ($row = self::HEADER_ROWS + 1; $row <= $endrow; $row++) {
             $value = trim((string) $sheet->getCellByColumnAndRow($columnindex + 1, $row)->getFormattedValue());
             if ($value !== '') {
@@ -392,5 +283,24 @@ class format_university_standard implements spreadsheet_format_interface {
         }
 
         return $score;
+    }
+
+    /**
+     * Check whether the resolved identifier column actually contains data.
+     *
+     * @param Worksheet $sheet
+     * @param int $identifiercolumn
+     * @param int $highestrow
+     * @return bool
+     */
+    private function has_identifier_data(Worksheet $sheet, int $identifiercolumn, int $highestrow): bool {
+        for ($row = self::HEADER_ROWS + 1; $row <= min($highestrow, self::HEADER_ROWS + 10); $row++) {
+            $value = $sheet->getCellByColumnAndRow($identifiercolumn + 1, $row)->getValue();
+            if (!empty(trim((string) $value))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

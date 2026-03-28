@@ -28,7 +28,9 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . '/phpspreadsheet/vendor/autoload.php');
 
+use Exception;
 use local_gradefiller\export\course_export_format_interface;
+use moodle_exception;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -84,8 +86,9 @@ class workbook_template_format implements course_export_format_interface {
 
         try {
             IOFactory::load($filepath);
-        } catch (\Exception $e) {
-            throw new \moodle_exception('error_export_template_invalid', 'local_gradefiller', '', null, $e->getMessage());
+        } catch (Exception $e) {
+            debugging('Grade Filler could not open workbook template: ' . $e->getMessage(), DEBUG_DEVELOPER);
+            throw new moodle_exception('error_export_template_invalid_generic', 'local_gradefiller');
         }
 
         return true;
@@ -117,10 +120,11 @@ class workbook_template_format implements course_export_format_interface {
             $writer->save($outputfile);
 
             return $outputfile;
-        } catch (\moodle_exception $e) {
+        } catch (moodle_exception $e) {
             throw $e;
-        } catch (\Exception $e) {
-            throw new \moodle_exception('error_export_template_write', 'local_gradefiller', '', null, $e->getMessage());
+        } catch (Exception $e) {
+            debugging('Grade Filler could not write workbook template: ' . $e->getMessage(), DEBUG_DEVELOPER);
+            throw new moodle_exception('error_export_template_write_generic', 'local_gradefiller');
         }
     }
 
@@ -193,7 +197,7 @@ class workbook_template_format implements course_export_format_interface {
     private function validate_extension(string $filepath): string {
         $extension = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
         if (!in_array($extension, self::ALLOWED_EXTENSIONS, true)) {
-            throw new \moodle_exception('error_export_template_extension', 'local_gradefiller', '', $extension);
+            throw new moodle_exception('error_export_template_extension', 'local_gradefiller', '', $extension);
         }
 
         return $extension;

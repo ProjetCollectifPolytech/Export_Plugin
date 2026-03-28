@@ -28,7 +28,6 @@ use local_gradefiller\spreadsheet\spreadsheet_format_interface;
  * @package    local_gradefiller
  */
 final class course_spreadsheet_export_manager_test extends gradefiller_testcase {
-
     public function test_process_export_averages_selected_grade_items_by_default(): void {
         [$course, $studenta, $studentb, $itemone, $itemtwo] = $this->create_standard_gradebook_fixture();
 
@@ -135,7 +134,7 @@ final class course_spreadsheet_export_manager_test extends gradefiller_testcase 
             . ($overrideaggregation ? 'xlsm' : 'xlsx');
 
         if ($overrideaggregation) {
-            return new class($identifiers, $outputfile) implements spreadsheet_format_interface, multi_activity_grade_aggregation_interface {
+            return new class ($identifiers, $outputfile) implements multi_activity_grade_aggregation_interface, spreadsheet_format_interface {
                 private array $identifiers;
                 private string $outputfile;
                 private array $writtengrades = [];
@@ -175,7 +174,7 @@ final class course_spreadsheet_export_manager_test extends gradefiller_testcase 
                 }
 
                 public function read_identifiers(string $filepath): array {
-                    return array_map(static function(array $entry): object {
+                    return array_map(static function (array $entry): object {
                         return (object) $entry;
                     }, $this->identifiers);
                 }
@@ -192,7 +191,7 @@ final class course_spreadsheet_export_manager_test extends gradefiller_testcase 
 
                 public function aggregate_multi_activity_grades(array $grades, object $context): ?float {
                     $this->aggregatedidentifiers[] = $context->identifier;
-                    return max(array_map(static function(object $grade): float {
+                    return max(array_map(static function (object $grade): float {
                         return (float) $grade->grade;
                     }, $grades));
                 }
@@ -211,7 +210,7 @@ final class course_spreadsheet_export_manager_test extends gradefiller_testcase 
             };
         }
 
-        return new class($identifiers, $outputfile) implements spreadsheet_format_interface {
+        return new class ($identifiers, $outputfile) implements spreadsheet_format_interface {
             private array $identifiers;
             private string $outputfile;
             private array $writtengrades = [];
@@ -250,7 +249,7 @@ final class course_spreadsheet_export_manager_test extends gradefiller_testcase 
             }
 
             public function read_identifiers(string $filepath): array {
-                return array_map(static function(array $entry): object {
+                return array_map(static function (array $entry): object {
                     return (object) $entry;
                 }, $this->identifiers);
             }

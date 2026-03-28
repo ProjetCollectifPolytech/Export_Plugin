@@ -22,7 +22,6 @@ namespace local_gradefiller\privacy;
  * @package    local_gradefiller
  */
 final class provider_test extends \advanced_testcase {
-
     public function test_provider_implements_null_provider(): void {
         $interfaces = class_implements(provider::class);
 

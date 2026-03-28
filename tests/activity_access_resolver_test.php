@@ -26,7 +26,6 @@ use local_gradefiller\integration\activity_access_resolver;
  * @package    local_gradefiller
  */
 final class activity_access_resolver_test extends gradefiller_testcase {
-
     public function test_resolve_returns_grade_item_metadata_for_supported_activity(): void {
         $this->resetAfterTest();
         $this->setAdminUser();

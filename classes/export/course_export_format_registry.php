@@ -26,7 +26,6 @@ namespace local_gradefiller\export;
 
 use local_gradefiller\export\format\workbook_template_format;
 
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Keeps course export format registration explicit.

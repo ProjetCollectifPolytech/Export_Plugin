@@ -28,9 +28,7 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/grade/export/lib.php');
 require_once($CFG->libdir . '/formslib.php');
-
 use moodleform;
-
 /**
  * Gradebook export form for the Grade Filler bridge page.
  *
@@ -39,10 +37,8 @@ use moodleform;
 class course_export_form extends moodleform {
     /** @var course_export_form_support */
     private course_export_form_support $support;
-
     /** @var course_export_form_definition_builder */
     private course_export_form_definition_builder $definitionbuilder;
-
     /**
      * Constructor.
      *
@@ -61,9 +57,9 @@ class course_export_form extends moodleform {
         $attributes = null,
         $editable = true
     ) {
+
         $this->support = new course_export_form_support();
         $this->definitionbuilder = new course_export_form_definition_builder($this->support);
-
         parent::__construct($action, $customdata, $method, $target, $attributes, $editable);
     }
 
@@ -71,25 +67,17 @@ class course_export_form extends moodleform {
      * Define the form fields.
      */
     public function definition() {
-        global $CFG, $COURSE;
 
+        global $CFG, $COURSE;
         $mform = $this->_form;
         $course = $this->_customdata['course'] ?? $COURSE;
         $formats = $this->_customdata['formats'] ?? [];
         $selectedspreadsheet = $this->_customdata['selectedspreadsheet'] ?? null;
-
         if ($this->definitionbuilder->add_grade_items_section($mform, $course, $CFG)) {
             $this->add_checkbox_controller(1, null, null, 1);
         }
         $this->definitionbuilder->add_export_options_section($mform, $course, $CFG);
-        $this->definitionbuilder->add_gradefiller_options_section(
-            $mform,
-            $course,
-            $formats,
-            $selectedspreadsheet,
-            $CFG
-        );
-
+        $this->definitionbuilder->add_gradefiller_options_section($mform, $course, $formats, $selectedspreadsheet, $CFG);
         $mform->addElement('hidden', 'id', $course->id);
         $mform->setType('id', PARAM_INT);
         $this->add_sticky_action_buttons(false, get_string('gradebook_export_download', 'local_gradefiller'));
@@ -101,11 +89,10 @@ class course_export_form extends moodleform {
      * @return \stdClass|null
      */
     public function get_data() {
-        global $CFG;
 
+        global $CFG;
         return $this->support->normalise_display_selection(parent::get_data(), (int)$CFG->grade_export_displaytype);
     }
-
     /**
      * Validate Grade Filler-specific fields.
      *

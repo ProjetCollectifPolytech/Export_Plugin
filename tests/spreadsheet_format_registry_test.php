@@ -24,7 +24,6 @@ use local_gradefiller\spreadsheet\format_university_standard;
  * @package    local_gradefiller
  */
 final class spreadsheet_format_registry_test extends \advanced_testcase {
-
     public function test_get_available_formats_returns_cached_explicit_formats(): void {
         $registry = new spreadsheet_format_registry();
 

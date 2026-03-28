@@ -16,8 +16,6 @@
 
 namespace local_gradefiller\event;
 
-defined('MOODLE_INTERNAL') || die();
-
 use core\event\base;
 use moodle_url;
 
@@ -25,6 +23,8 @@ use moodle_url;
  * Event fired when a spreadsheet is processed successfully.
  *
  * @package    local_gradefiller
+ * @copyright  2026
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class file_processed extends base {
     /**

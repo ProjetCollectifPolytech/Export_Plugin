@@ -24,7 +24,6 @@
 
 namespace local_gradefiller;
 
-defined('MOODLE_INTERNAL') || die();
 
 use local_gradefiller\service\grade_lookup_service;
 use local_gradefiller\service\spreadsheet_fill_service;
@@ -35,7 +34,6 @@ use local_gradefiller\service\spreadsheet_fill_service;
  * @package    local_gradefiller
  */
 class manager_factory {
-
     /**
      * Create a default manager instance.
      *

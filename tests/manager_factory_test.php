@@ -22,7 +22,6 @@ namespace local_gradefiller;
  * @package    local_gradefiller
  */
 final class manager_factory_test extends \advanced_testcase {
-
     public function test_create_default_returns_wired_manager(): void {
         $manager = manager_factory::create_default();
 

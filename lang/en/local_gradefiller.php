@@ -36,7 +36,6 @@ $string['gradefiller:use'] = 'Use Grade Filler to fill grades in a spreadsheet';
 // Driver names.
 $string['driver_offlinequiz'] = 'Offline Quiz (Anonymous)';
 $string['driver_papergrade'] = 'Papergrade (Scanner)';
-
 // Page.
 $string['page_title'] = 'Fill Grades in a Spreadsheet';
 $string['gradebook_export_page_title'] = 'Export grades with Grade Filler';
@@ -92,7 +91,6 @@ $string['event_page_viewed'] = 'Grade Filler page viewed';
 $string['event_file_processed'] = 'Grade Filler spreadsheet processed';
 $string['event_page_viewed_desc'] = 'User {$a->userid} viewed Grade Filler for module {$a->cmid} in course {$a->courseid}.';
 $string['event_file_processed_desc'] = 'User {$a->userid} processed a Grade Filler spreadsheet for module {$a->cmid} in course {$a->courseid} using source {$a->gradesource} ({$a->matched} matched, {$a->unmatched} unmatched, {$a->errors} errors).';
-
 // Privacy.
 $string['privacy:metadata'] = 'The Grade Filler plugin does not store personal data.';
 

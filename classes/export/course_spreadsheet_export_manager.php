@@ -24,7 +24,6 @@
 
 namespace local_gradefiller\export;
 
-defined('MOODLE_INTERNAL') || die();
 
 use grade_item;
 use local_gradefiller\manager;
@@ -33,14 +32,12 @@ use local_gradefiller\spreadsheet\multi_activity_grade_aggregation_interface;
 use local_gradefiller\spreadsheet\spreadsheet_format_interface;
 use stdClass;
 use Throwable;
-
 /**
  * Fills a teacher spreadsheet directly from selected course grade items.
  *
  * @package    local_gradefiller
  */
 class course_spreadsheet_export_manager {
-
     /**
      * Build and write a multi-activity spreadsheet export.
      *
@@ -60,11 +57,11 @@ class course_spreadsheet_export_manager {
         stdClass $formdata,
         string $originalfilename
     ): array {
+
         $spreadsheetformat->validate_file($filepath);
         $identifiers = $spreadsheetformat->read_identifiers($filepath);
         $gradeitems = $this->get_selected_grade_items($course, $formdata);
         $resolver = manager_factory::create_default();
-
         $stats = [
             'total' => count($identifiers),
             'matched' => 0,
@@ -118,13 +115,9 @@ class course_spreadsheet_export_manager {
                 }
             } catch (Throwable $e) {
                 $stats['errors']++;
-                debugging(
-                    'Grade Filler skipped identifier "' . $identifierentry->identifier . '" during aggregation: ' . $e->getMessage(),
-                    DEBUG_DEVELOPER
-                );
+                debugging('Grade Filler skipped identifier "' . $identifierentry->identifier . '" during aggregation: ' . $e->getMessage(), DEBUG_DEVELOPER);
             }
         }
-
         $outputfile = $spreadsheetformat->write_grades($filepath, $grades);
 
         return [
@@ -142,6 +135,7 @@ class course_spreadsheet_export_manager {
      * @return grade_item[]
      */
     private function get_selected_grade_items(stdClass $course, stdClass $formdata): array {
+
         $selecteditemids = array_keys(array_filter((array) ($formdata->itemids ?? [])));
         $gradeitems = [];
 
@@ -172,6 +166,7 @@ class course_spreadsheet_export_manager {
         stdClass $course,
         stdClass $formdata
     ): ?float {
+
         if (empty($grades)) {
             return null;
         }

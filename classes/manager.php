@@ -30,7 +30,6 @@ use local_gradefiller\service\spreadsheet_fill_service;
 use local_gradefiller\spreadsheet\spreadsheet_format_interface;
 use local_gradefiller\source\grade_source_interface;
 
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Thin facade preserved for the existing pages, hooks and tests.

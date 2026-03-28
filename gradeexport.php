@@ -25,10 +25,7 @@
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->dirroot . '/grade/export/lib.php');
 require_once($CFG->dirroot . '/local/gradefiller/lib.php');
-
 use local_gradefiller\controller\grade_export_controller;
-
 $id = required_param('id', PARAM_INT);
 $selectedspreadsheetkey = optional_param('spreadsheetformat', '', PARAM_ALPHANUMEXT);
-
 (new grade_export_controller())->handle($id, $selectedspreadsheetkey);

@@ -26,7 +26,6 @@ use local_gradefiller\source\grade_source_interface;
  * @package    local_gradefiller
  */
 final class upload_page_test extends \advanced_testcase {
-
     public function test_build_exposes_format_and_driver_metadata(): void {
         $this->resetAfterTest(true);
         $this->setAdminUser();

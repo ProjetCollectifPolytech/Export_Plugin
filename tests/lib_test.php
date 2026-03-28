@@ -25,7 +25,6 @@ require_once(__DIR__ . '/../lib.php');
  * @package    local_gradefiller
  */
 final class lib_test extends gradefiller_testcase {
-
     public function test_get_activity_access_data_returns_link_for_graded_activity(): void {
         $this->resetAfterTest();
         $this->setAdminUser();

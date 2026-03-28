@@ -24,7 +24,6 @@
 
 namespace local_gradefiller\spreadsheet;
 
-defined('MOODLE_INTERNAL') || die();
 
 use DOMDocument;
 use DOMElement;

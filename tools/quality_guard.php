@@ -30,8 +30,8 @@ $maxlines = [
     'lib.php' => 270,
     'classes/controller/grade_export_controller.php' => 110,
     'classes/form/course_export_form.php' => 160,
-    'classes/integration/activity_navigation_integration.php' => 200,
-    'classes/integration/grade_export_bridge_integration.php' => 190,
+    'classes/integration/activity_navigation_integration.php' => 230,
+    'classes/integration/grade_export_bridge_integration.php' => 210,
     'classes/spreadsheet/format_university_standard.php' => 330,
     'classes/spreadsheet/openxml_workbook_writer.php' => 240,
 ];

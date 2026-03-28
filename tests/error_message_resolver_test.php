@@ -24,7 +24,6 @@ use local_gradefiller\error\error_message_resolver;
  * @package    local_gradefiller
  */
 final class error_message_resolver_test extends \advanced_testcase {
-
     public function test_to_user_message_returns_moodle_exception_message(): void {
         $exception = new \moodle_exception('missingparam', 'error', '', 'id');
 

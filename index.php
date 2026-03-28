@@ -24,10 +24,7 @@
 
 require_once(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
-
 use local_gradefiller\controller\upload_controller;
-
 $cmid = required_param('id', PARAM_INT);
 $action = optional_param('action', '', PARAM_ALPHANUMEXT);
-
 (new upload_controller())->handle($cmid, $action);

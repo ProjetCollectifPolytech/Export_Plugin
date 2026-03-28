@@ -16,7 +16,6 @@
 
 namespace local_gradefiller\integration;
 
-defined('MOODLE_INTERNAL') || die();
 
 use cm_info;
 use context;
@@ -32,7 +31,8 @@ use stdClass;
 /**
  * Resolves activity-level access metadata for Grade Filler.
  *
- * @package    local_gradefiller
+ * @copyright  2026
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class activity_access_resolver {
     /** @var manager */

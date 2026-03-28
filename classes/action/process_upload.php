@@ -30,8 +30,6 @@ use local_gradefiller\util\download_handler;
 use local_gradefiller\util\file_handler;
 use moodle_exception;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Handles the file upload and processing action.
  *
@@ -43,7 +41,6 @@ defined('MOODLE_INTERNAL') || die();
  * 5. Sends the filled spreadsheet for download
  */
 class process_upload extends base_action {
-
     /**
      * Execute the upload processing action.
      *
@@ -74,10 +71,7 @@ class process_upload extends base_action {
             );
 
             file_processed::create([
-                'objectid' => $this->cmid,
-                'courseid' => $this->course->id,
-                'context' => $this->context,
-                'other' => [
+                'objectid' => $this->cmid, 'courseid' => $this->course->id, 'context' => $this->context, 'other' => [
                     'format' => $formatkey,
                     'gradesource' => $gradesource,
                     'total' => $result['stats']['total'],

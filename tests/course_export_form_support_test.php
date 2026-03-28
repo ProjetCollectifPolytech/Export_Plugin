@@ -27,7 +27,6 @@ use local_gradefiller\spreadsheet\spreadsheet_format_interface;
  * @package    local_gradefiller
  */
 final class course_export_form_support_test extends gradefiller_testcase {
-
     public function test_build_accepted_extensions_deduplicates_extensions(): void {
         $support = new course_export_form_support();
         $formats = [
@@ -73,7 +72,7 @@ final class course_export_form_support_test extends gradefiller_testcase {
      * @return spreadsheet_format_interface
      */
     private function create_format(array $extensions): spreadsheet_format_interface {
-        return new class($extensions) implements spreadsheet_format_interface {
+        return new class ($extensions) implements spreadsheet_format_interface {
             /** @var array */
             private array $extensions;
 

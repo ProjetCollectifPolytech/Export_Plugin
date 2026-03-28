@@ -24,7 +24,6 @@
 
 namespace local_gradefiller\page;
 
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Builds template data for the upload page.
@@ -32,7 +31,6 @@ defined('MOODLE_INTERNAL') || die();
  * @package    local_gradefiller
  */
 class upload_page {
-
     /**
      * Build upload template data.
      *

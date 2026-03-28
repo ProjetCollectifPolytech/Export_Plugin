@@ -16,7 +16,6 @@
 
 namespace local_gradefiller\integration;
 
-defined('MOODLE_INTERNAL') || die();
 
 use context_course;
 use moodle_page;
@@ -24,10 +23,10 @@ use moodle_page;
 /**
  * Detects whether the current Moodle page should expose the grade export bridge.
  *
- * @package    local_gradefiller
+ * @copyright  2026
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class grade_export_page_detector {
-
     /**
      * Determine whether the supplied page is a supported grade export page.
      *

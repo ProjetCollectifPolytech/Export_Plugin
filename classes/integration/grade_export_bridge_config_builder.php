@@ -16,7 +16,6 @@
 
 namespace local_gradefiller\integration;
 
-defined('MOODLE_INTERNAL') || die();
 
 use context_course;
 use local_gradefiller\manager;
@@ -26,7 +25,8 @@ use moodle_url;
 /**
  * Builds URLs and AMD configuration for the grade export bridge.
  *
- * @package    local_gradefiller
+ * @copyright  2026
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class grade_export_bridge_config_builder {
     /** @var manager */

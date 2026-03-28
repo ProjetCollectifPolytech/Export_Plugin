@@ -16,7 +16,6 @@
 
 namespace local_gradefiller\privacy;
 
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Privacy provider for local_gradefiller implementing null_provider.

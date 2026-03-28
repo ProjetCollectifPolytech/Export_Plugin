@@ -24,7 +24,6 @@ use local_gradefiller\spreadsheet\university_standard_spec;
  * @package    local_gradefiller
  */
 final class university_standard_spec_test extends \advanced_testcase {
-
     public function test_describe_contract_returns_explicit_workbook_invariants(): void {
         $spec = new university_standard_spec();
 

@@ -24,7 +24,6 @@
 
 namespace local_gradefiller\spreadsheet;
 
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Documents the structural invariants expected by the university template.

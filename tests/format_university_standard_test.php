@@ -206,8 +206,8 @@ class format_university_standard_test extends \advanced_testcase {
      * @covers \local_gradefiller\spreadsheet\format_university_standard::write_grades
      */
     public function test_write_grades_throws_for_unsupported_extension(): void {
-        $this->require_phpspreadsheet();
 
+        $this->require_phpspreadsheet();
         $this->expectException(\moodle_exception::class);
 
         $tmpfile = tempnam(sys_get_temp_dir(), 'gradefiller_test_') . '.csv';
@@ -226,26 +226,20 @@ class format_university_standard_test extends \advanced_testcase {
      * @covers \local_gradefiller\spreadsheet\format_university_standard::write_grades
      */
     public function test_write_grades_creates_missing_grade_cell(): void {
-        $this->require_phpspreadsheet();
 
+        $this->require_phpspreadsheet();
         $filepath = $this->create_apogee_like_workbook([
             ['row' => 18, 'A' => 'ID-001'],
         ]);
-
         $output = $this->format->write_grades($filepath, [
             (object) [
-                'identifier' => 'ID-001',
-                'grade' => 14.5,
-                'row_number' => 18,
+                'identifier' => 'ID-001', 'grade' => 14.5, 'row_number' => 18,
             ],
         ]);
-
         $workbook = \PhpOffice\PhpSpreadsheet\IOFactory::load($output);
         $sheet = $workbook->getActiveSheet();
-
         $this->assertSame(14.5, (float) $sheet->getCell('E18')->getValue());
     }
-
     /**
      * Create a lightweight workbook compatible with the university format.
      *

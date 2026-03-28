@@ -16,7 +16,6 @@
 
 namespace local_gradefiller\form;
 
-defined('MOODLE_INTERNAL') || die();
 
 use context_course;
 use grade_seq;
@@ -24,10 +23,10 @@ use grade_seq;
 /**
  * Pure helpers used by the Grade Filler export form.
  *
- * @package    local_gradefiller
+ * @copyright  2026
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class course_export_form_support {
-
     /**
      * Return the visible grade items that can be exported.
      *

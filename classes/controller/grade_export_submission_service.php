@@ -16,7 +16,6 @@
 
 namespace local_gradefiller\controller;
 
-defined('MOODLE_INTERNAL') || die();
 
 use core_form\util as form_util;
 use local_gradefiller\export\course_export_manager;
@@ -30,7 +29,8 @@ use Throwable;
 /**
  * Handles one submitted grade export bridge form.
  *
- * @package    local_gradefiller
+ * @copyright  2026
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class grade_export_submission_service {
     /** @var course_export_manager */

@@ -16,7 +16,6 @@
 
 namespace local_gradefiller\controller;
 
-defined('MOODLE_INTERNAL') || die();
 
 use local_gradefiller\export\course_export_manager;
 use local_gradefiller\form\course_export_form;
@@ -28,7 +27,8 @@ use moodle_url;
 /**
  * Loads and validates the grade export bridge request context.
  *
- * @package    local_gradefiller
+ * @copyright  2026
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class grade_export_context_loader {
     /** @var manager */

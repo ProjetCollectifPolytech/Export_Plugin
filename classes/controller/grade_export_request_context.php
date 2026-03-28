@@ -16,16 +16,37 @@
 
 namespace local_gradefiller\controller;
 
-defined('MOODLE_INTERNAL') || die();
-
 use local_gradefiller\form\course_export_form;
 
 /**
  * Immutable request context for the grade export bridge page.
  *
  * @package    local_gradefiller
+ * @copyright  2026
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 final class grade_export_request_context {
+    /** @var \stdClass */
+    public readonly \stdClass $course;
+
+    /** @var \context_course */
+    public readonly \context_course $context;
+
+    /** @var mixed */
+    public readonly mixed $selectedspreadsheet;
+
+    /** @var string */
+    public readonly string $selectedspreadsheetkey;
+
+    /** @var course_export_form */
+    public readonly course_export_form $form;
+
+    /** @var int */
+    public readonly int $currentgroup;
+
+    /** @var bool */
+    public readonly bool $requiresgroupselection;
+
     /**
      * Constructor.
      *
@@ -38,13 +59,20 @@ final class grade_export_request_context {
      * @param bool $requiresgroupselection
      */
     public function __construct(
-        public readonly \stdClass $course,
-        public readonly \context_course $context,
-        public readonly mixed $selectedspreadsheet,
-        public readonly string $selectedspreadsheetkey,
-        public readonly course_export_form $form,
-        public readonly int $currentgroup,
-        public readonly bool $requiresgroupselection
+        \stdClass $course,
+        \context_course $context,
+        mixed $selectedspreadsheet,
+        string $selectedspreadsheetkey,
+        course_export_form $form,
+        int $currentgroup,
+        bool $requiresgroupselection
     ) {
+        $this->course = $course;
+        $this->context = $context;
+        $this->selectedspreadsheet = $selectedspreadsheet;
+        $this->selectedspreadsheetkey = $selectedspreadsheetkey;
+        $this->form = $form;
+        $this->currentgroup = $currentgroup;
+        $this->requiresgroupselection = $requiresgroupselection;
     }
 }

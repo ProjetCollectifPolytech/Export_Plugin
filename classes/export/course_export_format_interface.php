@@ -24,7 +24,6 @@
 
 namespace local_gradefiller\export;
 
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Defines how Grade Filler injects a Moodle grade export into a teacher template.
@@ -32,7 +31,6 @@ defined('MOODLE_INTERNAL') || die();
  * @package    local_gradefiller
  */
 interface course_export_format_interface {
-
     /**
      * Get the human-readable name of the export format.
      *

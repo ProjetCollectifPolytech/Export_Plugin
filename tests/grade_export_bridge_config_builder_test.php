@@ -24,7 +24,6 @@ use local_gradefiller\integration\grade_export_bridge_config_builder;
  * @package    local_gradefiller
  */
 final class grade_export_bridge_config_builder_test extends \advanced_testcase {
-
     public function test_get_grade_export_url_preserves_selected_format(): void {
         $url = (new grade_export_bridge_config_builder())->get_grade_export_url(42, 'university_standard');
 

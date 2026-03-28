@@ -26,7 +26,6 @@ use local_gradefiller\source\grade_source_offlinequiz;
  * @package    local_gradefiller
  */
 final class source_offlinequiz_test extends gradefiller_testcase {
-
     public function test_supports_only_offlinequiz_modules(): void {
         $this->resetAfterTest();
         $this->setAdminUser();

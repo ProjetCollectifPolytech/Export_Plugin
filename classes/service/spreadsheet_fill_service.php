@@ -29,7 +29,6 @@ use local_gradefiller\spreadsheet_format_registry;
 use moodle_exception;
 use Throwable;
 
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Orchestrates identifier reading, grade lookup and workbook writing.

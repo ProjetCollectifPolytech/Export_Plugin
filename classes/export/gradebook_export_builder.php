@@ -27,12 +27,10 @@ namespace local_gradefiller\export;
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/grade/export/lib.php');
-
 use coding_exception;
 use grade_export;
 use graded_users_iterator;
 use stdClass;
-
 /**
  * Reuses Moodle's grade export base class to build a matrix of exported values.
  *
@@ -50,6 +48,7 @@ class gradebook_export_builder extends grade_export {
      * @param \stdClass $formdata Validated form data
      */
     public function __construct(stdClass $course, int $groupid, stdClass $formdata) {
+
         parent::__construct($course, $groupid, $formdata);
 
         // Match the one-step export plugins and include custom profile fields.

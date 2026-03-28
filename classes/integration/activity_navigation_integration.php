@@ -24,11 +24,11 @@
 
 namespace local_gradefiller\integration;
 
-defined('MOODLE_INTERNAL') || die();
 
 use cm_info;
 use context;
 use context_course;
+use html_writer;
 use moodle_page;
 use navigation_node;
 use settings_navigation;
@@ -113,14 +113,7 @@ class activity_navigation_integration {
             return;
         }
 
-        $buttonlink = \html_writer::link(
-            $accessdata['url'],
-            $accessdata['label'],
-            ['class' => 'btn btn-primary']
-        );
-        $buttonhtml = \html_writer::div($buttonlink, 'singlebutton local-gradefiller-activity-button');
-
-        $page->set_button($buttonhtml . (string)$page->button);
+        $page->set_button($this->render_activity_button($accessdata) . (string)$page->button);
     }
 
     /**
@@ -131,12 +124,7 @@ class activity_navigation_integration {
      * @return void
      */
     public function extend_settings_navigation(settings_navigation $settingsnav, moodle_page $page): void {
-        if ($page->cm === null || $page->course === null) {
-            return;
-        }
-
-        $coursecontext = context_course::instance($page->course->id);
-        $accessdata = $this->get_activity_access_data($page->cm, $coursecontext);
+        $accessdata = $this->get_page_access_data($page);
         if ($accessdata === null) {
             return;
         }
@@ -145,17 +133,9 @@ class activity_navigation_integration {
             $this->add_activity_button($page, $accessdata);
         }
 
-        if ($settingsnode = $settingsnav->find('modulesettings', navigation_node::TYPE_SETTING)) {
-            if (!$settingsnode->find($accessdata['nodekey'], navigation_node::TYPE_SETTING)) {
-                $settingsnode->add(
-                    $accessdata['label'],
-                    $accessdata['url'],
-                    navigation_node::TYPE_SETTING,
-                    null,
-                    $accessdata['nodekey'],
-                    $accessdata['icon']
-                );
-            }
+        $settingsnode = $settingsnav->find('modulesettings', navigation_node::TYPE_SETTING);
+        if ($settingsnode instanceof navigation_node) {
+            $this->add_settings_navigation_node($settingsnode, $accessdata);
         }
     }
 
@@ -174,10 +154,68 @@ class activity_navigation_integration {
             return;
         }
 
+        $this->add_navigation_node($navigation, $accessdata, navigation_node::TYPE_CUSTOM);
+    }
+
+    /**
+     * Resolve access data directly from the current page when possible.
+     *
+     * @param moodle_page $page
+     * @return array|null
+     */
+    private function get_page_access_data(moodle_page $page): ?array {
+        if ($page->cm === null || $page->course === null) {
+            return null;
+        }
+
+        $coursecontext = context_course::instance($page->course->id);
+        return $this->get_activity_access_data($page->cm, $coursecontext);
+    }
+
+    /**
+     * Build the HTML for the activity call-to-action button.
+     *
+     * @param array $accessdata
+     * @return string
+     */
+    private function render_activity_button(array $accessdata): string {
+        $buttonlink = html_writer::link(
+            $accessdata['url'],
+            $accessdata['label'],
+            ['class' => 'btn btn-primary']
+        );
+
+        return html_writer::div($buttonlink, 'singlebutton local-gradefiller-activity-button');
+    }
+
+    /**
+     * Add a settings-navigation link when it does not already exist.
+     *
+     * @param navigation_node $settingsnode
+     * @param array $accessdata
+     * @return void
+     */
+    private function add_settings_navigation_node(navigation_node $settingsnode, array $accessdata): void {
+        if ($settingsnode->find($accessdata['nodekey'], navigation_node::TYPE_SETTING)) {
+            return;
+        }
+
+        $this->add_navigation_node($settingsnode, $accessdata, navigation_node::TYPE_SETTING);
+    }
+
+    /**
+     * Add a navigation node described by access metadata.
+     *
+     * @param navigation_node $navigation
+     * @param array $accessdata
+     * @param int $nodetype
+     * @return void
+     */
+    private function add_navigation_node(navigation_node $navigation, array $accessdata, int $nodetype): void {
         $navigation->add(
             $accessdata['label'],
             $accessdata['url'],
-            navigation_node::TYPE_CUSTOM,
+            $nodetype,
             null,
             $accessdata['nodekey'],
             $accessdata['icon']

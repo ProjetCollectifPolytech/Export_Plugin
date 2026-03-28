@@ -27,7 +27,6 @@ namespace local_gradefiller\export\format;
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->libdir . '/phpspreadsheet/vendor/autoload.php');
-
 use Exception;
 use local_gradefiller\export\course_export_format_interface;
 use moodle_exception;
@@ -51,51 +50,65 @@ class workbook_template_format implements course_export_format_interface {
     private const ALLOWED_EXTENSIONS = ['xlsx', 'xlsm'];
 
     /**
-     * @inheritDoc
+     * Return the format label shown in the export UI.
+     *
+     * @return string
      */
     public function get_name(): string {
         return get_string('gradebook_export_format_workbook_name', 'local_gradefiller');
     }
 
     /**
-     * @inheritDoc
+     * Return the stable format key.
+     *
+     * @return string
      */
     public function get_key(): string {
         return 'workbook_template';
     }
 
     /**
-     * @inheritDoc
+     * Return the format description shown in the export UI.
+     *
+     * @return string
      */
     public function get_description(): string {
         return get_string('gradebook_export_format_workbook_desc', 'local_gradefiller');
     }
 
     /**
-     * @inheritDoc
+     * Return the workbook extensions accepted by this format.
+     *
+     * @return string[]
      */
     public function get_supported_extensions(): array {
         return self::ALLOWED_EXTENSIONS;
     }
 
     /**
-     * @inheritDoc
+     * Validate that the uploaded workbook can be opened.
+     *
+     * @param string $filepath
+     * @return bool
      */
     public function validate_template(string $filepath): bool {
-        $this->validate_extension($filepath);
 
+        $this->validate_extension($filepath);
         try {
             IOFactory::load($filepath);
         } catch (Exception $e) {
             debugging('Grade Filler could not open workbook template: ' . $e->getMessage(), DEBUG_DEVELOPER);
             throw new moodle_exception('error_export_template_invalid_generic', 'local_gradefiller');
         }
-
         return true;
     }
 
     /**
-     * @inheritDoc
+     * Inject exported grades into the dedicated workbook sheet.
+     *
+     * @param string $filepath
+     * @param object $exportdata
+     * @return string
      */
     public function export_to_template(string $filepath, object $exportdata): string {
         $extension = $this->validate_extension($filepath);
@@ -127,7 +140,6 @@ class workbook_template_format implements course_export_format_interface {
             throw new moodle_exception('error_export_template_write_generic', 'local_gradefiller');
         }
     }
-
     /**
      * Create or replace the worksheet used for Grade Filler exports.
      *
@@ -199,7 +211,6 @@ class workbook_template_format implements course_export_format_interface {
         if (!in_array($extension, self::ALLOWED_EXTENSIONS, true)) {
             throw new moodle_exception('error_export_template_extension', 'local_gradefiller', '', $extension);
         }
-
         return $extension;
     }
 }

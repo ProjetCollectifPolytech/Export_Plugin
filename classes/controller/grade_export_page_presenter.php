@@ -14,19 +14,26 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace local_gradefiller\controller;
-
-defined('MOODLE_INTERNAL') || die();
-
-use core_grades\output\export_action_bar;
-use local_gradefiller\integration\grade_export_bridge_config_builder;
-
 /**
  * Configures and renders the grade export bridge page.
  *
  * @package    local_gradefiller
+ * @copyright  2026
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class grade_export_page_renderer {
+
+namespace local_gradefiller\controller;
+
+use core_grades\output\export_action_bar;
+use html_writer;
+use local_gradefiller\integration\grade_export_bridge_config_builder;
+
+/**
+ * Prepares and outputs the grade export bridge page.
+ *
+ * @package    local_gradefiller
+ */
+class grade_export_page_presenter {
     /** @var grade_export_bridge_config_builder */
     private grade_export_bridge_config_builder $bridgeconfigbuilder;
 
@@ -80,6 +87,7 @@ class grade_export_page_renderer {
             null,
             $actionbar
         );
+
         echo $OUTPUT->heading(get_string('notingroup'));
         echo $OUTPUT->footer();
     }
@@ -111,7 +119,7 @@ class grade_export_page_renderer {
         );
 
         groups_print_course_menu($request->course, $pageurl);
-        echo \html_writer::div('', 'clearer');
+        echo html_writer::div('', 'clearer');
         echo $OUTPUT->notification(get_string('gradebook_export_intro', 'local_gradefiller'), 'info');
         $request->form->display();
         echo $OUTPUT->footer();

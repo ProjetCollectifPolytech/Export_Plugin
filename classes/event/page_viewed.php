@@ -15,16 +15,13 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace local_gradefiller\event;
-
-defined('MOODLE_INTERNAL') || die();
-
 use core\event\base;
 use moodle_url;
-
 /**
  * Event fired when the Grade Filler page is viewed.
  *
- * @package    local_gradefiller
+ * @copyright  2026
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class page_viewed extends base {
     /**
@@ -53,19 +50,18 @@ class page_viewed extends base {
      * @return string
      */
     public function get_description(): string {
+
         return get_string('event_page_viewed_desc', 'local_gradefiller', (object) [
-            'userid' => $this->userid,
-            'cmid' => $this->objectid,
-            'courseid' => $this->courseid,
+            'userid' => $this->userid, 'cmid' => $this->objectid, 'courseid' => $this->courseid,
         ]);
     }
-
     /**
      * Event URL.
      *
      * @return \moodle_url
      */
     public function get_url(): moodle_url {
+
         return new moodle_url('/local/gradefiller/index.php', ['id' => $this->objectid]);
     }
 }

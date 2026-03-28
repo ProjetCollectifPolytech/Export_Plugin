@@ -26,16 +26,16 @@ require_once(__DIR__ . '/gradefiller_testcase.php');
 final class manager_test extends gradefiller_testcase {
     /** @var string[] */
     private array $createdtables = [];
-
     protected function tearDown(): void {
+
         $this->drop_created_tables();
         parent::tearDown();
     }
 
     public function test_get_format_returns_the_university_standard_handler(): void {
+
         $manager = manager_factory::create_default();
         $format = $manager->get_format('university_standard');
-
         $this->assertNotNull($format);
         $this->assertSame('university_standard', $format->get_key());
     }
@@ -46,33 +46,23 @@ final class manager_test extends gradefiller_testcase {
 
         $course = $this->getDataGenerator()->create_course();
         $cm = $this->create_label_cm($course);
-
         $this->assertNull(manager_factory::create_default()->get_driver_for_cm($cm));
     }
 
     public function test_get_driver_for_cm_prefers_papergrade_when_exam_exists(): void {
-        global $DB;
 
+        global $DB;
         $this->resetAfterTest();
         $this->setAdminUser();
         $this->ensure_papergrade_exam_table_exists();
-
         $course = $this->getDataGenerator()->create_course();
         [, $cm] = $this->create_offlinequiz_activity($course);
-
         $DB->insert_record('local_papergrade_exam', (object)[
-            'offlinequizid' => $cm->instance,
-            'grade' => 20.0,
-            'mode' => 'anonymous',
-            'timecreated' => time(),
-            'timemodified' => time(),
+            'offlinequizid' => $cm->instance, 'grade' => 20.0, 'mode' => 'anonymous', 'timecreated' => time(), 'timemodified' => time(),
         ]);
-
         $driver = manager_factory::create_default()->get_driver_for_cm($cm);
-
         $this->assertInstanceOf(\local_gradefiller\source\grade_source_papergrade::class, $driver);
     }
-
     public function test_get_supported_grade_sources_includes_anonymous_for_offlinequiz(): void {
         $this->resetAfterTest();
         $this->setAdminUser();
@@ -81,7 +71,6 @@ final class manager_test extends gradefiller_testcase {
         [, $cm] = $this->create_offlinequiz_activity($course);
 
         $sources = manager_factory::create_default()->get_supported_grade_sources($cm);
-
         $this->assertSame(
             [manager::GRADE_SOURCE_STANDARD, manager::GRADE_SOURCE_ANONYMOUS],
             $sources
@@ -106,10 +95,9 @@ final class manager_test extends gradefiller_testcase {
      * @return void
      */
     private function ensure_papergrade_exam_table_exists(): void {
+
         global $CFG, $DB;
-
         require_once($CFG->libdir . '/xmldb/xmldb_table.php');
-
         $dbman = $DB->get_manager();
         $examtable = new \xmldb_table('local_papergrade_exam');
         if ($dbman->table_exists($examtable)) {
@@ -123,7 +111,6 @@ final class manager_test extends gradefiller_testcase {
         $examtable->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
         $examtable->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
         $examtable->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
-
         $dbman->create_table($examtable);
         $this->createdtables[] = 'local_papergrade_exam';
     }
@@ -134,18 +121,16 @@ final class manager_test extends gradefiller_testcase {
      * @return void
      */
     private function drop_created_tables(): void {
-        global $CFG, $DB;
 
+        global $CFG, $DB;
         if (empty($this->createdtables)) {
             return;
         }
 
         require_once($CFG->libdir . '/xmldb/xmldb_table.php');
-
         $dbman = $DB->get_manager();
         $tables = array_reverse($this->createdtables);
         $this->createdtables = [];
-
         foreach ($tables as $tablename) {
             $table = new \xmldb_table($tablename);
             if ($dbman->table_exists($table)) {

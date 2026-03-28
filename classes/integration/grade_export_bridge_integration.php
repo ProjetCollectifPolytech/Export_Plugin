@@ -24,7 +24,6 @@
 
 namespace local_gradefiller\integration;
 
-defined('MOODLE_INTERNAL') || die();
 
 use context_course;
 
@@ -149,18 +148,7 @@ class grade_export_bridge_integration {
      * @return string
      */
     public function before_standard_top_of_body_html(): string {
-        global $PAGE;
-
-        if (!$this->is_grade_export_page()) {
-            return '';
-        }
-
-        $context = $PAGE->context;
-        if (!$context instanceof context_course || !$this->can_access_grade_export_bridge($context)) {
-            return '';
-        }
-
-        $this->require_bridge($context);
+        $this->bootstrap_bridge_for_current_page();
         return '';
     }
 
@@ -170,18 +158,45 @@ class grade_export_bridge_integration {
      * @return string
      */
     public function before_footer(): string {
-        global $PAGE;
+        $this->bootstrap_bridge_for_current_page();
+        return '';
+    }
 
-        if (!$this->is_grade_export_page()) {
-            return '';
-        }
-
-        $context = $PAGE->context;
-        if (!$context instanceof context_course || !$this->can_access_grade_export_bridge($context)) {
-            return '';
+    /**
+     * Require the bridge when the current page and user are eligible.
+     *
+     * @return void
+     */
+    private function bootstrap_bridge_for_current_page(): void {
+        $context = $this->get_current_bridge_context();
+        if ($context === null) {
+            return;
         }
 
         $this->require_bridge($context);
-        return '';
+    }
+
+    /**
+     * Resolve the current course context when the bridge should be active.
+     *
+     * @return context_course|null
+     */
+    private function get_current_bridge_context(): ?context_course {
+        global $PAGE;
+
+        if (!$this->is_grade_export_page()) {
+            return null;
+        }
+
+        $context = $PAGE->context;
+        if (!$context instanceof context_course) {
+            return null;
+        }
+
+        if (!$this->can_access_grade_export_bridge($context)) {
+            return null;
+        }
+
+        return $context;
     }
 }

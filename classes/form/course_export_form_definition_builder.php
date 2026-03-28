@@ -16,7 +16,6 @@
 
 namespace local_gradefiller\form;
 
-defined('MOODLE_INTERNAL') || die();
 
 use context_course;
 use MoodleQuickForm;
@@ -24,7 +23,8 @@ use MoodleQuickForm;
 /**
  * Adds Grade Filler sections to the grade export form.
  *
- * @package    local_gradefiller
+ * @copyright  2026
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class course_export_form_definition_builder {
     /** @var course_export_form_support */

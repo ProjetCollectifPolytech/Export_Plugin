@@ -23,9 +23,6 @@
  */
 
 namespace local_gradefiller\controller;
-
-defined('MOODLE_INTERNAL') || die();
-
 use moodle_url;
 
 /**
@@ -36,30 +33,27 @@ use moodle_url;
 class grade_export_controller {
     /** @var grade_export_context_loader */
     private grade_export_context_loader $contextloader;
-
-    /** @var grade_export_page_renderer */
-    private grade_export_page_renderer $pagerenderer;
-
+    /** @var grade_export_page_presenter */
+    private grade_export_page_presenter $pagepresenter;
     /** @var grade_export_submission_service */
     private grade_export_submission_service $submissionservice;
-
     /**
      * Constructor.
      *
      * @param grade_export_context_loader|null $contextloader
-     * @param grade_export_page_renderer|null $pagerenderer
+     * @param grade_export_page_presenter|null $pagepresenter
      * @param grade_export_submission_service|null $submissionservice
      */
     public function __construct(
         ?grade_export_context_loader $contextloader = null,
-        ?grade_export_page_renderer $pagerenderer = null,
+        ?grade_export_page_presenter $pagepresenter = null,
         ?grade_export_submission_service $submissionservice = null
     ) {
+
         $this->contextloader = $contextloader ?? new grade_export_context_loader();
-        $this->pagerenderer = $pagerenderer ?? new grade_export_page_renderer();
+        $this->pagepresenter = $pagepresenter ?? new grade_export_page_presenter();
         $this->submissionservice = $submissionservice ?? new grade_export_submission_service();
     }
-
     /**
      * Handle the request and render the export bridge page.
      *
@@ -68,16 +62,14 @@ class grade_export_controller {
      * @return void
      */
     public function handle(int $courseid, string $selectedspreadsheetkey): void {
+
         $request = $this->contextloader->load($courseid, $selectedspreadsheetkey);
         $pageurl = $this->contextloader->build_page_url($courseid, $selectedspreadsheetkey)->out(false);
-
-        $this->pagerenderer->prepare_page($request, $pageurl);
-
+        $this->pagepresenter->prepare_page($request, $pageurl);
         if ($request->requiresgroupselection) {
-            $this->pagerenderer->render_not_in_group($request);
+            $this->pagepresenter->render_not_in_group($request);
             return;
         }
-
         if ($request->form->is_cancelled()) {
             redirect(new moodle_url('/grade/export/index.php', ['id' => $request->course->id]));
         }
@@ -86,6 +78,6 @@ class grade_export_controller {
             $this->submissionservice->process($request, $data);
         }
 
-        $this->pagerenderer->render_form($request, $pageurl);
+        $this->pagepresenter->render_form($request, $pageurl);
     }
 }

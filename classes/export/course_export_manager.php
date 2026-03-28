@@ -23,12 +23,8 @@
  */
 
 namespace local_gradefiller\export;
-
-defined('MOODLE_INTERNAL') || die();
-
 use moodle_exception;
 use stdClass;
-
 /**
  * Handles gradebook export workflows backed by uploaded templates.
  *
@@ -37,25 +33,24 @@ use stdClass;
 class course_export_manager {
     /** @var course_export_format_registry */
     private course_export_format_registry $registry;
-
     /**
      * Constructor.
      *
      * @param course_export_format_registry|null $registry
      */
     public function __construct(?course_export_format_registry $registry = null) {
+
         $this->registry = $registry ?? new course_export_format_registry();
     }
-
     /**
      * Get the list of available Grade Filler course export formats.
      *
      * @return array
      */
     public function get_available_formats(): array {
+
         return $this->registry->get_available_formats();
     }
-
     /**
      * Resolve a course export format by its stable key.
      *
@@ -63,9 +58,9 @@ class course_export_manager {
      * @return course_export_format_interface|null
      */
     public function get_format(string $formatkey): ?course_export_format_interface {
+
         return $this->registry->get_format($formatkey);
     }
-
     /**
      * Process a gradebook export into a teacher-provided workbook template.
      *
@@ -85,11 +80,11 @@ class course_export_manager {
         stdClass $formdata,
         string $originalfilename
     ): array {
+
         $format = $this->get_format($formatkey);
         if ($format === null) {
             throw new moodle_exception('error_export_format_not_found', 'local_gradefiller', '', $formatkey);
         }
-
         $builder = new gradebook_export_builder($course, $groupid, $formdata);
         $exportdata = $builder->build_export_data();
         $outputfile = $format->export_to_template($filepath, $exportdata);

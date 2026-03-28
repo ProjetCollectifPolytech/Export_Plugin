@@ -29,14 +29,8 @@ defined('MOODLE_INTERNAL') || die();
 use cm_info;
 use context;
 use context_course;
-use context_module;
-use grade_item;
-use local_gradefiller\manager;
-use local_gradefiller\manager_factory;
 use moodle_page;
-use moodle_url;
 use navigation_node;
-use pix_icon;
 use settings_navigation;
 use stdClass;
 
@@ -46,16 +40,16 @@ use stdClass;
  * @package    local_gradefiller
  */
 class activity_navigation_integration {
-    /** @var manager */
-    private manager $manager;
+    /** @var activity_access_resolver */
+    private activity_access_resolver $accessresolver;
 
     /**
      * Constructor.
      *
-     * @param manager|null $manager
+     * @param activity_access_resolver|null $accessresolver
      */
-    public function __construct(?manager $manager = null) {
-        $this->manager = $manager ?? manager_factory::create_default();
+    public function __construct(?activity_access_resolver $accessresolver = null) {
+        $this->accessresolver = $accessresolver ?? new activity_access_resolver();
     }
 
     /**
@@ -65,8 +59,7 @@ class activity_navigation_integration {
      * @return bool
      */
     public function user_can_view(context $context): bool {
-        return has_capability('local/gradefiller:view', $context)
-            || has_capability('local/gradefiller:use', $context);
+        return $this->accessresolver->user_can_view($context);
     }
 
     /**
@@ -76,8 +69,7 @@ class activity_navigation_integration {
      * @return bool
      */
     public function user_can_process(context $context): bool {
-        return has_capability('local/gradefiller:process', $context)
-            || has_capability('local/gradefiller:use', $context);
+        return $this->accessresolver->user_can_process($context);
     }
 
     /**
@@ -88,33 +80,7 @@ class activity_navigation_integration {
      * @return array|null
      */
     public function get_activity_access_data($cm, context_course $coursecontext): ?array {
-        $modulecontext = context_module::instance($cm->id);
-        if (!$this->user_can_view($modulecontext)) {
-            return null;
-        }
-
-        $gradeitem = grade_item::fetch([
-            'itemtype' => 'mod',
-            'itemmodule' => $cm->modname,
-            'iteminstance' => $cm->instance,
-            'courseid' => $coursecontext->instanceid,
-        ]);
-        $driver = $this->manager->get_driver_for_cm($cm);
-
-        if (!$gradeitem && $driver === null) {
-            return null;
-        }
-
-        return [
-            'label' => get_string('fill_grades', 'local_gradefiller'),
-            'url' => new moodle_url('/local/gradefiller/index.php', ['id' => $cm->id]),
-            'nodekey' => 'gradefiller_fill',
-            'icon' => new pix_icon('i/grades', ''),
-            'can_process' => $this->user_can_process($modulecontext),
-            'has_grade_item' => (bool)$gradeitem,
-            'supports_anonymous' => ($driver !== null),
-            'driver_name' => $driver ? $driver->get_name() : '',
-        ];
+        return $this->accessresolver->resolve($cm, $coursecontext);
     }
 
     /**

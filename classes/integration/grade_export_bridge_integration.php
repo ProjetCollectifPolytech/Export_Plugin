@@ -27,9 +27,6 @@ namespace local_gradefiller\integration;
 defined('MOODLE_INTERNAL') || die();
 
 use context_course;
-use local_gradefiller\manager;
-use local_gradefiller\manager_factory;
-use moodle_url;
 
 /**
  * Encapsulates the native grade export bridge integration.
@@ -37,8 +34,11 @@ use moodle_url;
  * @package    local_gradefiller
  */
 class grade_export_bridge_integration {
-    /** @var manager */
-    private manager $manager;
+    /** @var grade_export_bridge_config_builder */
+    private grade_export_bridge_config_builder $configbuilder;
+
+    /** @var grade_export_page_detector */
+    private grade_export_page_detector $pagedetector;
 
     /** @var bool */
     private bool $bridgeloaded = false;
@@ -46,10 +46,15 @@ class grade_export_bridge_integration {
     /**
      * Constructor.
      *
-     * @param manager|null $manager
+     * @param grade_export_bridge_config_builder|null $configbuilder
+     * @param grade_export_page_detector|null $pagedetector
      */
-    public function __construct(?manager $manager = null) {
-        $this->manager = $manager ?? manager_factory::create_default();
+    public function __construct(
+        ?grade_export_bridge_config_builder $configbuilder = null,
+        ?grade_export_page_detector $pagedetector = null
+    ) {
+        $this->configbuilder = $configbuilder ?? new grade_export_bridge_config_builder();
+        $this->pagedetector = $pagedetector ?? new grade_export_page_detector();
     }
 
     /**
@@ -57,15 +62,10 @@ class grade_export_bridge_integration {
      *
      * @param int $courseid
      * @param string|null $spreadsheetformat
-     * @return moodle_url
+     * @return \moodle_url
      */
-    public function get_grade_export_url(int $courseid, ?string $spreadsheetformat = null): moodle_url {
-        $params = ['id' => $courseid];
-        if (!empty($spreadsheetformat)) {
-            $params['spreadsheetformat'] = $spreadsheetformat;
-        }
-
-        return new moodle_url('/local/gradefiller/gradeexport.php', $params);
+    public function get_grade_export_url(int $courseid, ?string $spreadsheetformat = null): \moodle_url {
+        return $this->configbuilder->get_grade_export_url($courseid, $spreadsheetformat);
     }
 
     /**
@@ -75,17 +75,7 @@ class grade_export_bridge_integration {
      * @return array<int, array<string, string>>
      */
     public function get_bridge_options(int $courseid): array {
-        $options = [];
-        foreach ($this->manager->get_available_formats() as $format) {
-            $options[] = [
-                'key' => $format->get_key(),
-                'label' => $format->get_name(),
-                'description' => $format->get_description(),
-                'url' => $this->get_grade_export_url($courseid, $format->get_key())->out(false),
-            ];
-        }
-
-        return $options;
+        return $this->configbuilder->get_bridge_options($courseid);
     }
 
     /**
@@ -105,18 +95,7 @@ class grade_export_bridge_integration {
      * @return string
      */
     public function get_action_plugin(int $courseid): string {
-        $exports = \grade_helper::get_plugins_export($courseid);
-        if (empty($exports) || !is_array($exports)) {
-            return 'ods';
-        }
-
-        foreach ($exports as $export) {
-            if ($export->id !== 'keymanager') {
-                return $export->id;
-            }
-        }
-
-        return 'ods';
+        return $this->configbuilder->get_action_plugin($courseid);
     }
 
     /**
@@ -127,19 +106,7 @@ class grade_export_bridge_integration {
     public function is_grade_export_page(): bool {
         global $PAGE;
 
-        if (!$PAGE->has_set_url() || !$PAGE->context instanceof context_course) {
-            return false;
-        }
-
-        $supportedpaths = [
-            '/grade/export/ods/index.php',
-            '/grade/export/txt/index.php',
-            '/grade/export/xls/index.php',
-            '/grade/export/xml/index.php',
-            '/local/gradefiller/gradeexport.php',
-        ];
-
-        return in_array($PAGE->url->get_path(), $supportedpaths, true);
+        return $this->pagedetector->is_grade_export_page($PAGE);
     }
 
     /**
@@ -151,10 +118,7 @@ class grade_export_bridge_integration {
     public function get_bridge_config(context_course $context): array {
         global $PAGE;
 
-        return [
-            'options' => $this->get_bridge_options($context->instanceid),
-            'currenturl' => $PAGE->url->out(false),
-        ];
+        return $this->configbuilder->get_bridge_config($context, $PAGE->url->out(false));
     }
 
     /**

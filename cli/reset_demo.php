@@ -64,8 +64,8 @@ define('MAX_GRADE', 20.0);
 
 // Students: username => [idnumber, firstname, lastname]
 define('DEMO_STUDENTS', [
-    'alice_demo'   => ['Etu001', 'Alice',   'Dupont'],
-    'bob_demo'     => ['Etu002', 'Bob',     'Martin'],
+    'alice_demo'   => ['Etu001', 'Alice', 'Dupont'],
+    'bob_demo'     => ['Etu002', 'Bob', 'Martin'],
     'charlie_demo' => ['Etu003', 'Charlie', 'Durand'],
 ]);
 
@@ -73,7 +73,7 @@ define('DEMO_STUDENTS', [
 define('STANDARD_GRADES', [15.0, 12.5, 18.0]);
 
 // Anonymous barcode keys + grades for the ANONYMOUS activity.
-define('ANON_KEYS',   ['OFF-1111', 'OFF-2222', 'OFF-3333']);
+define('ANON_KEYS', ['OFF-1111', 'OFF-2222', 'OFF-3333']);
 define('ANON_GRADES', [14.0, 16.5, 9.0]);
 
 // ---------------------------------------------------------------------------
@@ -179,22 +179,22 @@ function gf_generate_sample_xlsx(string $filepath, string $sheetTitle, array $id
     $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(12);
 
     $metaLabels = [
-        'A2'  => 'Etablissement:',   'B2'  => 'Université Démo',
-        'A3'  => 'Composante:',      'B3'  => 'UFR Informatique',
-        'A4'  => 'Diplôme:',         'B4'  => 'Licence Informatique',
+        'A2'  => 'Etablissement:', 'B2'  => 'Université Démo',
+        'A3'  => 'Composante:', 'B3'  => 'UFR Informatique',
+        'A4'  => 'Diplôme:', 'B4'  => 'Licence Informatique',
         'A5'  => 'Version diplôme:', 'B5'  => '2025-2026',
-        'A6'  => 'Etape:',           'B6'  => 'L3 Informatique',
-        'A7'  => 'Année:',           'B7'  => '2025-2026',
-        'A8'  => 'Session:',         'B8'  => 'Initiale',
-        'A9'  => 'Epreuve:',         'B9'  => $sheetTitle,
-        'A10' => 'Code épreuve:',    'B10' => 'INF301',
-        'A11' => 'Type épreuve:',    'B11' => 'CC',
-        'A12' => 'Coefficient:',     'B12' => '1',
-        'A13' => 'Barème:',          'B13' => '20',
-        'A14' => 'Date export:',     'B14' => date('d/m/Y'),
+        'A6'  => 'Etape:', 'B6'  => 'L3 Informatique',
+        'A7'  => 'Année:', 'B7'  => '2025-2026',
+        'A8'  => 'Session:', 'B8'  => 'Initiale',
+        'A9'  => 'Epreuve:', 'B9'  => $sheetTitle,
+        'A10' => 'Code épreuve:', 'B10' => 'INF301',
+        'A11' => 'Type épreuve:', 'B11' => 'CC',
+        'A12' => 'Coefficient:', 'B12' => '1',
+        'A13' => 'Barème:', 'B13' => '20',
+        'A14' => 'Date export:', 'B14' => date('d/m/Y'),
         'A15' => '',
-        'A16' => 'N° Etudiant',      'B16' => 'Nom',
-        'A17' => '',                 // blank separator row
+        'A16' => 'N° Etudiant', 'B16' => 'Nom',
+        'A17' => '', // blank separator row
     ];
     foreach ($metaLabels as $cell => $value) {
         $sheet->setCellValue($cell, $value);
@@ -293,7 +293,7 @@ try {
     // -----------------------------------------------------------------------
     // 4. Activity 1: Standard mode — real grades in Moodle gradebook.
     // -----------------------------------------------------------------------
-    list($oq1, $cm1) = gf_create_offlinequiz($course, $oqmod->id, 'QCM Standard (Apogée)');
+    [$oq1, $cm1] = gf_create_offlinequiz($course, $oqmod->id, 'QCM Standard (Apogée)');
 
     // Get (or create) the course-level grade category.
     $coursecategory = grade_category::fetch_course_category($course->id);
@@ -356,7 +356,7 @@ try {
     // -----------------------------------------------------------------------
     // 5. Activity 2: Anonymous mode — userid=0 results + barcode userkeys.
     // -----------------------------------------------------------------------
-    list($oq2, $cm2) = gf_create_offlinequiz($course, $oqmod->id, 'QCM Anonyme (Barcodes)');
+    [$oq2, $cm2] = gf_create_offlinequiz($course, $oqmod->id, 'QCM Anonyme (Barcodes)');
 
     // Offlinequiz group (required FK for results/scanned pages).
     $group2 = (object)[
@@ -450,7 +450,6 @@ try {
     cli_writeln("  URL      : {$baseurl}/local/gradefiller/index.php?id={$cm2->id}");
     cli_writeln('');
     cli_writeln("Course URL : {$baseurl}/course/view.php?id={$course->id}");
-
 } catch (Exception $e) {
     cli_error("Fatal error: " . $e->getMessage() . "\n" . $e->getTraceAsString());
 }

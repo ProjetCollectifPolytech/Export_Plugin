@@ -56,11 +56,11 @@ class file_handler_test extends \advanced_testcase {
      */
     public static function provider_allowed_extensions(): array {
         return [
-            'xlsx file' => ['grades.xlsx'],
-            'xlsm file' => ['grades.xlsm'],
-            'xls file'  => ['grades.xls'],
-            'ods file'  => ['grades.ods'],
-            'csv file'  => ['grades.csv'],
+        'xlsx file' => ['grades.xlsx'],
+        'xlsm file' => ['grades.xlsm'],
+        'xls file'  => ['grades.xls'],
+        'ods file'  => ['grades.ods'],
+        'csv file'  => ['grades.csv'],
         ];
     }
 
@@ -80,11 +80,11 @@ class file_handler_test extends \advanced_testcase {
      */
     public static function provider_disallowed_extensions(): array {
         return [
-            'pdf file'  => ['grades.pdf'],
-            'txt file'  => ['grades.txt'],
-            'docx file' => ['grades.docx'],
-            'zip file'  => ['archive.zip'],
-            'php file'  => ['attack.php'],
+        'pdf file'  => ['grades.pdf'],
+        'txt file'  => ['grades.txt'],
+        'docx file' => ['grades.docx'],
+        'zip file'  => ['archive.zip'],
+        'php file'  => ['attack.php'],
         ];
     }
 
@@ -105,6 +105,7 @@ class file_handler_test extends \advanced_testcase {
      * @covers \local_gradefiller\util\file_handler::validate_extension
      */
     public function test_validate_extension_returns_false_for_no_extension(): void {
+
         $allowed = ['xlsx', 'ods'];
         $this->assertFalse(file_handler::validate_extension('grades', $allowed));
     }
@@ -115,15 +116,14 @@ class file_handler_test extends \advanced_testcase {
      * @covers \local_gradefiller\util\file_handler::generate_temp_upload_path
      */
     public function test_generate_temp_upload_path_returns_unique_safe_paths(): void {
+
         $first = file_handler::generate_temp_upload_path('../Grades Final.XLSX');
         $second = file_handler::generate_temp_upload_path('../Grades Final.XLSX');
-
         $this->assertSame(make_temp_directory('gradefiller'), dirname($first));
         $this->assertSame('xlsx', pathinfo($first, PATHINFO_EXTENSION));
         $this->assertStringStartsWith('Grades_Final_', pathinfo($first, PATHINFO_FILENAME));
         $this->assertNotSame($first, $second);
     }
-
     // Tests for cleanup.
 
     /**
@@ -146,6 +146,7 @@ class file_handler_test extends \advanced_testcase {
      * @covers \local_gradefiller\util\file_handler::cleanup
      */
     public function test_cleanup_silently_ignores_missing_file(): void {
+
         // Should not throw any exception.
         file_handler::cleanup(sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'gradefiller_nonexistent_file_' . uniqid() . '.tmp');
         $this->assertTrue(true); // Reached here without exception.

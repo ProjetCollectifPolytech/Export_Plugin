@@ -27,7 +27,6 @@ namespace local_gradefiller;
 use local_gradefiller\spreadsheet\format_university_standard;
 use local_gradefiller\spreadsheet\spreadsheet_format_interface;
 
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Keeps spreadsheet format registration explicit.

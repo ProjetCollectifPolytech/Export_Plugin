@@ -23,18 +23,13 @@
  */
 
 namespace local_gradefiller\util;
-
-defined('MOODLE_INTERNAL') || die();
-
 use moodle_exception;
-
 /**
  * File handler utility class
  *
  * Handles file upload and temporary file management.
  */
 class file_handler {
-
     /**
      * Handle uploaded file
      *
@@ -45,13 +40,13 @@ class file_handler {
      * @throws \moodle_exception If upload failed
      */
     public static function handle_upload(string $filekey): string {
+
         if (!isset($_FILES[$filekey]) || $_FILES[$filekey]['error'] !== UPLOAD_ERR_OK) {
             $error = isset($_FILES[$filekey]) ? $_FILES[$filekey]['error'] : 'No file in $_FILES';
             throw new moodle_exception('error_no_file', 'local_gradefiller', '', $error);
         }
 
         $tempfile = self::generate_temp_upload_path($_FILES[$filekey]['name']);
-
         if (!move_uploaded_file($_FILES[$filekey]['tmp_name'], $tempfile)) {
             throw new moodle_exception('error_moving_file', 'local_gradefiller');
         }
@@ -66,11 +61,10 @@ class file_handler {
      * @return string Absolute path inside Moodle temp storage
      */
     public static function generate_temp_upload_path(string $originalname): string {
-        $tempdir = make_temp_directory('gradefiller');
 
+        $tempdir = make_temp_directory('gradefiller');
         return $tempdir . DIRECTORY_SEPARATOR . self::build_temp_upload_filename($originalname);
     }
-
     /**
      * Cleanup temporary file
      *
@@ -91,9 +85,9 @@ class file_handler {
      * @return bool True if valid
      */
     public static function validate_extension(string $filename, array $allowedext): bool {
+
         $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
         $normalizedallowed = array_map('strtolower', $allowedext);
-
         return in_array($extension, $normalizedallowed, true);
     }
 
@@ -104,6 +98,7 @@ class file_handler {
      * @return string Safe unique filename
      */
     private static function build_temp_upload_filename(string $originalname): string {
+
         $cleanname = clean_filename($originalname);
         $extension = strtolower(pathinfo($cleanname, PATHINFO_EXTENSION));
         $basename = trim((string)pathinfo($cleanname, PATHINFO_FILENAME), '.');
@@ -113,7 +108,6 @@ class file_handler {
         $basename = trim((string)$basename, '_');
         $basename = $basename !== '' ? $basename : 'upload';
         $suffix = str_replace('.', '', uniqid('', true));
-
         if ($extension !== '') {
             return $basename . '_' . $suffix . '.' . $extension;
         }

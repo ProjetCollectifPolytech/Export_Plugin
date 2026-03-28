@@ -25,7 +25,6 @@ use local_gradefiller\export\format\workbook_template_format;
  * @package    local_gradefiller
  */
 final class course_export_manager_test extends \advanced_testcase {
-
     public function test_get_available_formats_returns_workbook_template_format(): void {
         $formats = (new course_export_manager())->get_available_formats();
 

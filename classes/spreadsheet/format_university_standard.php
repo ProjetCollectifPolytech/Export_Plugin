@@ -31,7 +31,6 @@ require_once($CFG->libdir . '/phpspreadsheet/vendor/autoload.php');
 use Exception;
 use moodle_exception;
 use PhpOffice\PhpSpreadsheet\IOFactory;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
 /**
  * Spreadsheet strategy for the Apogee-like university template.
@@ -44,20 +43,29 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
  * @package    local_gradefiller
  */
 class format_university_standard implements spreadsheet_format_interface {
-    /** @var string[] Supported file extensions for this format */
-    private const ALLOWED_EXTENSIONS = ['xlsx', 'xlsm'];
-
-    /** @var string OpenXML worksheet path used by the template */
-    private const SHEET_XML_PATH = 'xl/worksheets/sheet1.xml';
-
-    /** @var string Grade column letter in the target worksheet */
-    private const GRADE_COLUMN_LETTER = 'E';
-
     /** @var int Number of header rows to skip */
-    public const HEADER_ROWS = 17;
+    public const HEADER_ROWS = university_standard_spec::HEADER_ROWS;
 
-    /** @var int Preferred identifier column index (zero-based) */
-    private const COLUMN_IDENTIFIER = 0;
+    /** @var university_standard_spec */
+    private university_standard_spec $spec;
+
+    /** @var university_standard_identifier_column_resolver */
+    private university_standard_identifier_column_resolver $identifiercolumnresolver;
+
+    /**
+     * Constructor.
+     *
+     * @param university_standard_spec|null $spec
+     * @param university_standard_identifier_column_resolver|null $identifiercolumnresolver
+     */
+    public function __construct(
+        ?university_standard_spec $spec = null,
+        ?university_standard_identifier_column_resolver $identifiercolumnresolver = null
+    ) {
+        $this->spec = $spec ?? new university_standard_spec();
+        $this->identifiercolumnresolver = $identifiercolumnresolver
+            ?? new university_standard_identifier_column_resolver($this->spec);
+    }
 
     /**
      * Get the human-readable name of this format.
@@ -92,7 +100,7 @@ class format_university_standard implements spreadsheet_format_interface {
      * @return string[]
      */
     public function get_supported_extensions(): array {
-        return self::ALLOWED_EXTENSIONS;
+        return $this->spec->get_supported_extensions();
     }
 
     /**
@@ -134,7 +142,7 @@ class format_university_standard implements spreadsheet_format_interface {
             $spreadsheet = IOFactory::load($filepath);
             $sheet = $spreadsheet->getActiveSheet();
             $highestrow = $sheet->getHighestRow();
-            $identifiercolumn = $this->resolve_identifier_column($sheet, $highestrow);
+            $identifiercolumn = $this->identifiercolumnresolver->resolve_identifier_column($sheet, $highestrow);
 
             $identifiers = [];
             for ($row = self::HEADER_ROWS + 1; $row <= $highestrow; $row++) {
@@ -176,11 +184,15 @@ class format_university_standard implements spreadsheet_format_interface {
                 continue;
             }
 
-            $cellvalues[self::GRADE_COLUMN_LETTER . (int) $grade->row_number] = $grade->grade;
+            $cellvalues[$this->spec->get_grade_column_letter() . (int) $grade->row_number] = $grade->grade;
         }
 
         try {
-            return (new openxml_workbook_writer())->write_numeric_cells($filepath, self::SHEET_XML_PATH, $cellvalues);
+            return (new openxml_workbook_writer())->write_numeric_cells(
+                $filepath,
+                $this->spec->get_sheet_xml_path(),
+                $cellvalues
+            );
         } catch (moodle_exception $e) {
             throw $e;
         } catch (Exception $e) {
@@ -201,13 +213,13 @@ class format_university_standard implements spreadsheet_format_interface {
             $spreadsheet = IOFactory::load($filepath);
             $sheet = $spreadsheet->getActiveSheet();
             $highestrow = $sheet->getHighestRow();
-            $identifiercolumn = $this->resolve_identifier_column($sheet, $highestrow);
+            $identifiercolumn = $this->identifiercolumnresolver->resolve_identifier_column($sheet, $highestrow);
 
             if ($highestrow <= self::HEADER_ROWS) {
                 throw new moodle_exception('error_format_insufficient_rows', 'local_gradefiller', '', self::HEADER_ROWS + 1);
             }
 
-            if (!$this->has_identifier_data($sheet, $identifiercolumn, $highestrow)) {
+            if (!$this->identifiercolumnresolver->has_identifier_data($sheet, $identifiercolumn, $highestrow)) {
                 throw new moodle_exception('error_format_no_identifiers', 'local_gradefiller');
             }
 
@@ -227,80 +239,10 @@ class format_university_standard implements spreadsheet_format_interface {
      */
     private function validate_extension(string $filepath): string {
         $extension = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
-        if (!in_array($extension, self::ALLOWED_EXTENSIONS, true)) {
+        if (!in_array($extension, $this->spec->get_supported_extensions(), true)) {
             throw new moodle_exception('error_unsupported_extension', 'local_gradefiller', '', $extension);
         }
 
         return $extension;
-    }
-
-    /**
-     * Resolve the identifier column used by the spreadsheet.
-     *
-     * Column A stays the preferred location, but some institutional exports put
-     * the effective identifier in another early column while keeping the same
-     * note column.
-     *
-     * @param Worksheet $sheet
-     * @param int $highestrow
-     * @return int
-     */
-    private function resolve_identifier_column(Worksheet $sheet, int $highestrow): int {
-        if ($this->count_identifier_candidates($sheet, self::COLUMN_IDENTIFIER, $highestrow) > 0) {
-            return self::COLUMN_IDENTIFIER;
-        }
-
-        $bestcolumn = self::COLUMN_IDENTIFIER;
-        $bestscore = 0;
-        foreach ([0, 1, 2, 3] as $candidate) {
-            $score = $this->count_identifier_candidates($sheet, $candidate, $highestrow);
-            if ($score > $bestscore) {
-                $bestcolumn = $candidate;
-                $bestscore = $score;
-            }
-        }
-
-        return $bestcolumn;
-    }
-
-    /**
-     * Count identifier-like values in the first data rows for one column.
-     *
-     * @param Worksheet $sheet
-     * @param int $columnindex
-     * @param int $highestrow
-     * @return int
-     */
-    private function count_identifier_candidates(Worksheet $sheet, int $columnindex, int $highestrow): int {
-        $score = 0;
-        $endrow = min($highestrow, self::HEADER_ROWS + 25);
-
-        for ($row = self::HEADER_ROWS + 1; $row <= $endrow; $row++) {
-            $value = trim((string) $sheet->getCellByColumnAndRow($columnindex + 1, $row)->getFormattedValue());
-            if ($value !== '') {
-                $score++;
-            }
-        }
-
-        return $score;
-    }
-
-    /**
-     * Check whether the resolved identifier column actually contains data.
-     *
-     * @param Worksheet $sheet
-     * @param int $identifiercolumn
-     * @param int $highestrow
-     * @return bool
-     */
-    private function has_identifier_data(Worksheet $sheet, int $identifiercolumn, int $highestrow): bool {
-        for ($row = self::HEADER_ROWS + 1; $row <= min($highestrow, self::HEADER_ROWS + 10); $row++) {
-            $value = $sheet->getCellByColumnAndRow($identifiercolumn + 1, $row)->getValue();
-            if (!empty(trim((string) $value))) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

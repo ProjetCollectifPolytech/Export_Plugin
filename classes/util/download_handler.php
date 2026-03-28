@@ -24,7 +24,6 @@
 
 namespace local_gradefiller\util;
 
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Download handler utility class
@@ -32,7 +31,6 @@ defined('MOODLE_INTERNAL') || die();
  * Handles file download with proper HTTP headers.
  */
 class download_handler {
-
     /**
      * Send file for download and terminate script
      *
@@ -41,9 +39,9 @@ class download_handler {
      * @return void This method terminates script execution
      */
     public static function send_file(string $filepath, string $downloadname): void {
+
         send_temp_file($filepath, clean_filename($downloadname));
     }
-
     /**
      * Generate download filename with timestamp
      *

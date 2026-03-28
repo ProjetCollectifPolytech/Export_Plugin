@@ -24,7 +24,6 @@
 
 namespace local_gradefiller\spreadsheet;
 
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Allows a spreadsheet format to override the default multi-activity
@@ -33,7 +32,6 @@ defined('MOODLE_INTERNAL') || die();
  * @package    local_gradefiller
  */
 interface multi_activity_grade_aggregation_interface {
-
     /**
      * Aggregate the grades collected for one identifier.
      *

@@ -23,12 +23,39 @@
  */
 
 defined('MOODLE_INTERNAL') || die();
-
 require_once($CFG->libdir . '/gradelib.php');
 require_once($CFG->dirroot . '/grade/lib.php');
+use local_gradefiller\integration\activity_navigation_integration;
+use local_gradefiller\integration\grade_export_bridge_integration;
+/**
+ * Return the shared activity navigation integration instance.
+ *
+ * @return activity_navigation_integration
+ */
+function local_gradefiller_get_activity_navigation_integration(): activity_navigation_integration {
 
-use local_gradefiller\manager;
+    static $integration = null;
+    if ($integration === null) {
+        $integration = new activity_navigation_integration();
+    }
 
+    return $integration;
+}
+
+/**
+ * Return the shared grade export bridge integration instance.
+ *
+ * @return grade_export_bridge_integration
+ */
+function local_gradefiller_get_grade_export_bridge_integration(): grade_export_bridge_integration {
+
+    static $integration = null;
+    if ($integration === null) {
+        $integration = new grade_export_bridge_integration();
+    }
+
+    return $integration;
+}
 /**
  * Check whether the current user can view Grade Filler.
  *
@@ -39,10 +66,9 @@ use local_gradefiller\manager;
  * @return bool
  */
 function local_gradefiller_user_can_view(context $context): bool {
-    return has_capability('local/gradefiller:view', $context)
-        || has_capability('local/gradefiller:use', $context);
-}
 
+    return local_gradefiller_get_activity_navigation_integration()->user_can_view($context);
+}
 /**
  * Check whether the current user can process files in Grade Filler.
  *
@@ -53,10 +79,9 @@ function local_gradefiller_user_can_view(context $context): bool {
  * @return bool
  */
 function local_gradefiller_user_can_process(context $context): bool {
-    return has_capability('local/gradefiller:process', $context)
-        || has_capability('local/gradefiller:use', $context);
-}
 
+    return local_gradefiller_get_activity_navigation_integration()->user_can_process($context);
+}
 /**
  * Resolve activity access metadata for Grade Filler links and buttons.
  *
@@ -65,55 +90,19 @@ function local_gradefiller_user_can_process(context $context): bool {
  * @return array|null
  */
 function local_gradefiller_get_activity_access_data($cm, context_course $coursecontext): ?array {
-    $modulecontext = context_module::instance($cm->id);
-    if (!local_gradefiller_user_can_view($modulecontext)) {
-        return null;
-    }
 
-    $manager = new manager();
-    $gradeitem = grade_item::fetch([
-        'itemtype' => 'mod',
-        'itemmodule' => $cm->modname,
-        'iteminstance' => $cm->instance,
-        'courseid' => $coursecontext->instanceid,
-    ]);
-    $driver = $manager->get_driver_for_cm($cm);
-
-    if (!$gradeitem && $driver === null) {
-        return null;
-    }
-
-    return [
-        'label' => get_string('fill_grades', 'local_gradefiller'),
-        'url' => new moodle_url('/local/gradefiller/index.php', ['id' => $cm->id]),
-        'nodekey' => 'gradefiller_fill',
-        'icon' => new pix_icon('i/grades', ''),
-        'can_process' => local_gradefiller_user_can_process($modulecontext),
-        'has_grade_item' => (bool)$gradeitem,
-        'supports_anonymous' => ($driver !== null),
-        'driver_name' => $driver ? $driver->get_name() : '',
-    ];
+    return local_gradefiller_get_activity_navigation_integration()->get_activity_access_data($cm, $coursecontext);
 }
-
 /**
  * Determine whether the current page should display a prominent activity button.
  *
  * @return bool
  */
 function local_gradefiller_should_add_activity_button(): bool {
+
     global $PAGE;
-
-    if (empty($PAGE->cm) || empty($PAGE->activityname)) {
-        return false;
-    }
-
-    if ((int)$PAGE->context->contextlevel !== CONTEXT_MODULE) {
-        return false;
-    }
-
-    return str_starts_with((string)$PAGE->pagetype, 'mod-' . $PAGE->activityname . '-');
+    return local_gradefiller_get_activity_navigation_integration()->should_add_activity_button($PAGE);
 }
-
 /**
  * Add a visible page button for supported activity pages.
  *
@@ -121,22 +110,10 @@ function local_gradefiller_should_add_activity_button(): bool {
  * @return void
  */
 function local_gradefiller_add_activity_button(array $accessdata): void {
+
     global $PAGE;
-
-    if (strpos((string)$PAGE->button, 'local-gradefiller-activity-button') !== false) {
-        return;
-    }
-
-    $buttonlink = html_writer::link(
-        $accessdata['url'],
-        $accessdata['label'],
-        ['class' => 'btn btn-primary']
-    );
-    $buttonhtml = html_writer::div($buttonlink, 'singlebutton local-gradefiller-activity-button');
-
-    $PAGE->set_button($buttonhtml . (string)$PAGE->button);
+    local_gradefiller_get_activity_navigation_integration()->add_activity_button($PAGE, $accessdata);
 }
-
 /**
  * Extend the activity settings navigation with a Grade Filler link.
  *
@@ -145,36 +122,10 @@ function local_gradefiller_add_activity_button(array $accessdata): void {
  * @return void
  */
 function local_gradefiller_extend_settings_navigation($settingsnav, $context) {
+
     global $PAGE;
-
-    if ($PAGE->cm === null || $PAGE->course === null) {
-        return;
-    }
-
-    $coursecontext = context_course::instance($PAGE->course->id);
-    $accessdata = local_gradefiller_get_activity_access_data($PAGE->cm, $coursecontext);
-    if ($accessdata === null) {
-        return;
-    }
-
-    if (local_gradefiller_should_add_activity_button()) {
-        local_gradefiller_add_activity_button($accessdata);
-    }
-
-    if ($settingsnode = $settingsnav->find('modulesettings', navigation_node::TYPE_SETTING)) {
-        if (!$settingsnode->find($accessdata['nodekey'], navigation_node::TYPE_SETTING)) {
-            $settingsnode->add(
-                $accessdata['label'],
-                $accessdata['url'],
-                navigation_node::TYPE_SETTING,
-                null,
-                $accessdata['nodekey'],
-                $accessdata['icon']
-            );
-        }
-    }
+    local_gradefiller_get_activity_navigation_integration()->extend_settings_navigation($settingsnav, $PAGE);
 }
-
 /**
  * Add link to secondary navigation on supported activity pages.
  *
@@ -184,22 +135,9 @@ function local_gradefiller_extend_settings_navigation($settingsnav, $context) {
  * @return void
  */
 function local_gradefiller_extend_navigation_module($navigation, $course, $cm) {
-    $coursecontext = context_course::instance($course->id);
-    $accessdata = local_gradefiller_get_activity_access_data($cm, $coursecontext);
-    if ($accessdata === null) {
-        return;
-    }
 
-    $navigation->add(
-        $accessdata['label'],
-        $accessdata['url'],
-        navigation_node::TYPE_CUSTOM,
-        null,
-        $accessdata['nodekey'],
-        $accessdata['icon']
-    );
+    local_gradefiller_get_activity_navigation_integration()->extend_navigation_module($navigation, $course, $cm);
 }
-
 /**
  * Backward-compatible wrapper for older navigation integrations.
  *
@@ -226,14 +164,9 @@ function local_gradefiller_extend_navigation_course($navigation, $course, $conte
  * @return moodle_url
  */
 function local_gradefiller_get_grade_export_url(int $courseid, ?string $spreadsheetformat = null): moodle_url {
-    $params = ['id' => $courseid];
-    if (!empty($spreadsheetformat)) {
-        $params['spreadsheetformat'] = $spreadsheetformat;
-    }
 
-    return new moodle_url('/local/gradefiller/gradeexport.php', $params);
+    return local_gradefiller_get_grade_export_bridge_integration()->get_grade_export_url($courseid, $spreadsheetformat);
 }
-
 /**
  * Return the Grade Filler spreadsheet formats that should be exposed in Moodle's
  * native "Export as" menu.
@@ -242,21 +175,9 @@ function local_gradefiller_get_grade_export_url(int $courseid, ?string $spreadsh
  * @return array<int, array<string, string>>
  */
 function local_gradefiller_get_grade_export_bridge_options(int $courseid): array {
-    $manager = new manager();
-    $options = [];
 
-    foreach ($manager->get_available_formats() as $format) {
-        $options[] = [
-            'key' => $format->get_key(),
-            'label' => $format->get_name(),
-            'description' => $format->get_description(),
-            'url' => local_gradefiller_get_grade_export_url($courseid, $format->get_key())->out(false),
-        ];
-    }
-
-    return $options;
+    return local_gradefiller_get_grade_export_bridge_integration()->get_bridge_options($courseid);
 }
-
 /**
  * Check whether the current user can access the Grade Filler grade export bridge.
  *
@@ -268,9 +189,9 @@ function local_gradefiller_get_grade_export_bridge_options(int $courseid): array
  * @return bool
  */
 function local_gradefiller_can_access_grade_export_bridge(context_course $context): bool {
-    return has_capability('moodle/grade:export', $context);
-}
 
+    return local_gradefiller_get_grade_export_bridge_integration()->can_access_grade_export_bridge($context);
+}
 /**
  * Resolve a native grade export plugin key for the action bar on Grade Filler pages.
  *
@@ -278,43 +199,18 @@ function local_gradefiller_can_access_grade_export_bridge(context_course $contex
  * @return string
  */
 function local_gradefiller_get_grade_export_action_plugin(int $courseid): string {
-    $exports = \grade_helper::get_plugins_export($courseid);
-    if (empty($exports) || !is_array($exports)) {
-        return 'ods';
-    }
 
-    foreach ($exports as $export) {
-        if ($export->id !== 'keymanager') {
-            return $export->id;
-        }
-    }
-
-    return 'ods';
+    return local_gradefiller_get_grade_export_bridge_integration()->get_action_plugin($courseid);
 }
-
 /**
  * Determine whether the current page is a grade export page that should expose the Grade Filler bridge.
  *
  * @return bool
  */
 function local_gradefiller_is_grade_export_page(): bool {
-    global $PAGE;
 
-    if (!$PAGE->has_set_url() || !$PAGE->context instanceof context_course) {
-        return false;
-    }
-    $path = $PAGE->url->get_path();
-    $supportedpaths = [
-        '/grade/export/ods/index.php',
-        '/grade/export/txt/index.php',
-        '/grade/export/xls/index.php',
-        '/grade/export/xml/index.php',
-        '/local/gradefiller/gradeexport.php',
-    ];
-
-    return in_array($path, $supportedpaths, true);
+    return local_gradefiller_get_grade_export_bridge_integration()->is_grade_export_page();
 }
-
 /**
  * Build the configuration passed to the grade export bridge AMD module.
  *
@@ -322,12 +218,8 @@ function local_gradefiller_is_grade_export_page(): bool {
  * @return array<string, mixed>
  */
 function local_gradefiller_get_grade_export_bridge_config(context_course $context): array {
-    global $PAGE;
 
-    return [
-        'options' => local_gradefiller_get_grade_export_bridge_options($context->instanceid),
-        'currenturl' => $PAGE->url->out(false),
-    ];
+    return local_gradefiller_get_grade_export_bridge_integration()->get_bridge_config($context);
 }
 
 /**
@@ -337,43 +229,18 @@ function local_gradefiller_get_grade_export_bridge_config(context_course $contex
  * @return void
  */
 function local_gradefiller_require_grade_export_bridge(context_course $context): void {
-    global $PAGE;
 
-    static $loaded = false;
-    if ($loaded) {
-        return;
-    }
-
-    $config = local_gradefiller_get_grade_export_bridge_config($context);
-    if (empty($config['options'])) {
-        return;
-    }
-
-    $PAGE->requires->js_call_amd('local_gradefiller/grade_export_bridge', 'init', [$config]);
-    $loaded = true;
+    local_gradefiller_get_grade_export_bridge_integration()->require_bridge($context);
 }
-
 /**
  * Inject the Grade Filler entry into Moodle's native grade export selector.
  *
  * @return string
  */
 function local_gradefiller_before_standard_top_of_body_html(): string {
-    global $PAGE;
 
-    if (!local_gradefiller_is_grade_export_page()) {
-        return '';
-    }
-
-    $context = $PAGE->context;
-    if (!$context instanceof context_course || !local_gradefiller_can_access_grade_export_bridge($context)) {
-        return '';
-    }
-
-    local_gradefiller_require_grade_export_bridge($context);
-    return '';
+    return local_gradefiller_get_grade_export_bridge_integration()->before_standard_top_of_body_html();
 }
-
 /**
  * Inject the Grade Filler bridge again before footer for pages where late DOM
  * initialisation can replace parts of the export action bar.
@@ -381,17 +248,6 @@ function local_gradefiller_before_standard_top_of_body_html(): string {
  * @return string
  */
 function local_gradefiller_before_footer(): string {
-    global $PAGE;
 
-    if (!local_gradefiller_is_grade_export_page()) {
-        return '';
-    }
-
-    $context = $PAGE->context;
-    if (!$context instanceof context_course || !local_gradefiller_can_access_grade_export_bridge($context)) {
-        return '';
-    }
-
-    local_gradefiller_require_grade_export_bridge($context);
-    return '';
+    return local_gradefiller_get_grade_export_bridge_integration()->before_footer();
 }

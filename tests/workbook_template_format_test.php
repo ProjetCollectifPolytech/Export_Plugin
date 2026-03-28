@@ -27,7 +27,6 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
  * @package    local_gradefiller
  */
 final class workbook_template_format_test extends \advanced_testcase {
-
     protected function setUp(): void {
         parent::setUp();
         $this->resetAfterTest(true);

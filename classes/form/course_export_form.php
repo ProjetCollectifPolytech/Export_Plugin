@@ -28,186 +28,56 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/grade/export/lib.php');
 require_once($CFG->libdir . '/formslib.php');
-
-use context_course;
-use grade_seq;
 use moodleform;
-
 /**
  * Gradebook export form for the Grade Filler bridge page.
  *
  * @package    local_gradefiller
  */
 class course_export_form extends moodleform {
+    /** @var course_export_form_support */
+    private course_export_form_support $support;
+    /** @var course_export_form_definition_builder */
+    private course_export_form_definition_builder $definitionbuilder;
+    /**
+     * Constructor.
+     *
+     * @param mixed $action
+     * @param mixed $customdata
+     * @param string $method
+     * @param string $target
+     * @param array|null $attributes
+     * @param bool $editable
+     */
+    public function __construct(
+        $action = null,
+        $customdata = null,
+        $method = 'post',
+        $target = '',
+        $attributes = null,
+        $editable = true
+    ) {
+
+        $this->support = new course_export_form_support();
+        $this->definitionbuilder = new course_export_form_definition_builder($this->support);
+        parent::__construct($action, $customdata, $method, $target, $attributes, $editable);
+    }
 
     /**
      * Define the form fields.
      */
     public function definition() {
-        global $CFG, $COURSE;
 
+        global $CFG, $COURSE;
         $mform = $this->_form;
         $course = $this->_customdata['course'] ?? $COURSE;
         $formats = $this->_customdata['formats'] ?? [];
         $selectedspreadsheet = $this->_customdata['selectedspreadsheet'] ?? null;
-
-        $mform->addElement('header', 'gradeitems', get_string('gradeitemsinc', 'grades'));
-        $mform->setExpanded('gradeitems', true);
-
-        $switch = grade_get_setting($course->id, 'aggregationposition', $CFG->grade_aggregationposition);
-        $sequence = new grade_seq($course->id, $switch);
-        $needsmultiselect = false;
-        $canviewhidden = has_capability('moodle/grade:viewhidden', context_course::instance($course->id));
-
-        if ($gradeitems = $sequence->items) {
-            foreach ($gradeitems as $gradeitem) {
-                if ($gradeitem->is_hidden() && !$canviewhidden) {
-                    continue;
-                }
-
-                $mform->addElement(
-                    'advcheckbox',
-                    'itemids[' . $gradeitem->id . ']',
-                    $gradeitem->get_name(),
-                    null,
-                    ['group' => 1]
-                );
-                $mform->setDefault('itemids[' . $gradeitem->id . ']', 1);
-                $needsmultiselect = true;
-            }
-        }
-
-        if ($needsmultiselect) {
+        if ($this->definitionbuilder->add_grade_items_section($mform, $course, $CFG)) {
             $this->add_checkbox_controller(1, null, null, 1);
         }
-
-        $mform->addElement('header', 'options', get_string('exportformatoptions', 'grades'));
-        $mform->setExpanded('options', false);
-
-        $mform->addElement('advcheckbox', 'export_feedback', get_string('exportfeedback', 'grades'));
-        $mform->setDefault('export_feedback', $CFG->grade_export_exportfeedback ?? 0);
-
-        $coursecontext = \context_course::instance($course->id);
-        if (has_capability('moodle/course:viewsuspendedusers', $coursecontext)) {
-            $mform->addElement('advcheckbox', 'export_onlyactive', get_string('exportonlyactive', 'grades'));
-            $mform->setType('export_onlyactive', PARAM_BOOL);
-            $mform->setDefault('export_onlyactive', 1);
-            $mform->addHelpButton('export_onlyactive', 'exportonlyactive', 'grades');
-        } else {
-            $mform->addElement('hidden', 'export_onlyactive', 1);
-            $mform->setType('export_onlyactive', PARAM_BOOL);
-            $mform->setConstant('export_onlyactive', 1);
-        }
-
-        $checkboxes = [];
-        $checkboxes[] = $mform->createElement(
-            'advcheckbox',
-            'display[real]',
-            null,
-            get_string('real', 'grades'),
-            null,
-            [0, GRADE_DISPLAY_TYPE_REAL]
-        );
-        $checkboxes[] = $mform->createElement(
-            'advcheckbox',
-            'display[percentage]',
-            null,
-            get_string('percentage', 'grades'),
-            null,
-            [0, GRADE_DISPLAY_TYPE_PERCENTAGE]
-        );
-        $checkboxes[] = $mform->createElement(
-            'advcheckbox',
-            'display[letter]',
-            null,
-            get_string('letter', 'grades'),
-            null,
-            [0, GRADE_DISPLAY_TYPE_LETTER]
-        );
-        $mform->addGroup($checkboxes, 'displaytypes', get_string('gradeexportdisplaytypes', 'grades'), ' ', false);
-        $mform->setDefault('display[real]', $CFG->grade_export_displaytype == GRADE_DISPLAY_TYPE_REAL);
-        $mform->setDefault('display[percentage]', $CFG->grade_export_displaytype == GRADE_DISPLAY_TYPE_PERCENTAGE);
-        $mform->setDefault('display[letter]', $CFG->grade_export_displaytype == GRADE_DISPLAY_TYPE_LETTER);
-
-        $mform->addElement(
-            'select',
-            'decimals',
-            get_string('gradeexportdecimalpoints', 'grades'),
-            [0 => 0, 1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5]
-        );
-        $mform->setDefault('decimals', $CFG->grade_export_decimalpoints);
-
-        $sectiontitle = $selectedspreadsheet !== null
-            ? $selectedspreadsheet->get_name()
-            : get_string('gradebook_export_section', 'local_gradefiller');
-
-        $mform->addElement('header', 'gradefilleroptions', $sectiontitle);
-        $mform->setExpanded('gradefilleroptions', true);
-
-        $formatoptions = [];
-        foreach ($formats as $format) {
-            $formatoptions[$format->get_key()] = $format->get_name() . ' - ' . $format->get_description();
-        }
-
-        $acceptedextensions = [];
-        if ($selectedspreadsheet !== null) {
-            foreach ($selectedspreadsheet->get_supported_extensions() as $extension) {
-                $acceptedextensions[] = '.' . ltrim((string) $extension, '.');
-            }
-        } else {
-            foreach ($formats as $format) {
-                foreach ($format->get_supported_extensions() as $extension) {
-                    $acceptedextensions[] = '.' . ltrim((string) $extension, '.');
-                }
-            }
-        }
-        $acceptedextensions = array_values(array_unique($acceptedextensions));
-        if (empty($acceptedextensions)) {
-            $acceptedextensions = ['.xlsx'];
-        }
-
-        if ($selectedspreadsheet !== null && $selectedspreadsheet->get_upload_help() !== '') {
-            $mform->addElement(
-                'static',
-                'spreadsheetformat_help',
-                '',
-                \html_writer::div(s($selectedspreadsheet->get_upload_help()), 'text-muted')
-            );
-        }
-
-        if ($selectedspreadsheet !== null) {
-            $mform->addElement('hidden', 'spreadsheetformat', $selectedspreadsheet->get_key());
-            $mform->setType('spreadsheetformat', PARAM_ALPHANUMEXT);
-        }
-
-        if (count($formatoptions) > 1) {
-            $mform->addElement(
-                'select',
-                'gradefiller_format',
-                get_string('gradebook_export_format', 'local_gradefiller'),
-                $formatoptions
-            );
-            $mform->setType('gradefiller_format', PARAM_ALPHANUMEXT);
-            $mform->addRule('gradefiller_format', null, 'required', null, 'client');
-            $mform->setDefault('gradefiller_format', array_key_first($formatoptions));
-        } else if (!empty($formatoptions)) {
-            $mform->addElement('hidden', 'gradefiller_format', array_key_first($formatoptions));
-            $mform->setType('gradefiller_format', PARAM_ALPHANUMEXT);
-        }
-
-        $filepickerlabel = $selectedspreadsheet !== null
-            ? $selectedspreadsheet->get_upload_label()
-            : get_string('gradebook_template_file', 'local_gradefiller');
-
-        $mform->addElement('filepicker', 'templatefile', $filepickerlabel, null, [
-            'accepted_types' => $acceptedextensions,
-            'maxbytes' => get_max_upload_file_size($CFG->maxbytes, $course->maxbytes),
-        ]);
-        $mform->addRule('templatefile', null, 'required', null, 'client');
-        if ($selectedspreadsheet === null) {
-            $mform->addHelpButton('templatefile', 'gradebook_template_file', 'local_gradefiller');
-        }
-
+        $this->definitionbuilder->add_export_options_section($mform, $course, $CFG);
+        $this->definitionbuilder->add_gradefiller_options_section($mform, $course, $formats, $selectedspreadsheet, $CFG);
         $mform->addElement('hidden', 'id', $course->id);
         $mform->setType('id', PARAM_INT);
         $this->add_sticky_action_buttons(false, get_string('gradebook_export_download', 'local_gradefiller'));
@@ -219,22 +89,10 @@ class course_export_form extends moodleform {
      * @return \stdClass|null
      */
     public function get_data() {
+
         global $CFG;
-
-        $data = parent::get_data();
-        if ($data && isset($data->display) && is_array($data->display) && count(array_filter($data->display)) === 0) {
-            if ($CFG->grade_export_displaytype == GRADE_DISPLAY_TYPE_LETTER) {
-                $data->display['letter'] = GRADE_DISPLAY_TYPE_LETTER;
-            } else if ($CFG->grade_export_displaytype == GRADE_DISPLAY_TYPE_PERCENTAGE) {
-                $data->display['percentage'] = GRADE_DISPLAY_TYPE_PERCENTAGE;
-            } else {
-                $data->display['real'] = GRADE_DISPLAY_TYPE_REAL;
-            }
-        }
-
-        return $data;
+        return $this->support->normalise_display_selection(parent::get_data(), (int)$CFG->grade_export_displaytype);
     }
-
     /**
      * Validate Grade Filler-specific fields.
      *

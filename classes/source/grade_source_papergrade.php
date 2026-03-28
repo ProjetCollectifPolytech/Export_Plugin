@@ -26,7 +26,6 @@
 
 namespace local_gradefiller\source;
 
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Papergrade driver implementation
@@ -38,7 +37,6 @@ defined('MOODLE_INTERNAL') || die();
 class grade_source_papergrade implements grade_source_interface {
     /** @var string[] Result statuses considered approved by Papergrade */
     private const APPROVED_STATUSES = ['validated', 'ok'];
-
     /**
      * Get the human-readable name of this driver
      *
@@ -91,12 +89,11 @@ class grade_source_papergrade implements grade_source_interface {
 
         // Get the offlinequiz instance ID.
         $cm = get_coursemodule_from_id('offlinequiz', $cmid, 0, false, MUST_EXIST);
-        
+
         // Find the exam record.
         $exam = $DB->get_record('local_papergrade_exam', ['offlinequizid' => $cm->instance], '*', MUST_EXIST);
 
         [$statussql, $statusparams] = $DB->get_in_or_equal(self::APPROVED_STATUSES, SQL_PARAMS_NAMED, 'status');
-
         // Fetch the latest approved result matching the anonymous ID.
         $sql = "SELECT r.grade
                 FROM {local_papergrade_results} r
@@ -104,15 +101,11 @@ class grade_source_papergrade implements grade_source_interface {
                   AND r.anonymousid = :anonid
                   AND r.status {$statussql}
                 ORDER BY r.timemodified DESC";
-
         $params = array_merge([
-            'examid' => $exam->id,
-            'anonid' => (int)$anonkey,
+            'examid' => $exam->id, 'anonid' => (int)$anonkey,
         ], $statusparams);
-
         $records = $DB->get_records_sql($sql, $params, 0, 1);
         $record = !empty($records) ? reset($records) : null;
-
         if ($record && $record->grade !== null) {
             return (object)[
                 'grade' => (float)$record->grade,

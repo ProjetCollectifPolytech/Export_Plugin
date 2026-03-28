@@ -24,7 +24,6 @@
 
 namespace local_gradefiller\error;
 
-defined('MOODLE_INTERNAL') || die();
 
 use moodle_exception;
 use Throwable;
@@ -35,7 +34,6 @@ use Throwable;
  * @package    local_gradefiller
  */
 class error_message_resolver {
-
     /**
      * Resolve the message that should be shown in the UI.
      *

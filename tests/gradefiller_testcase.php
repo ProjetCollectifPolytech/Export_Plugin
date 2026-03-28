@@ -29,7 +29,6 @@ use stdClass;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 abstract class gradefiller_testcase extends \advanced_testcase {
-
     /**
      * Create a basic label activity and return its course module.
      *

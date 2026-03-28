@@ -28,7 +28,6 @@ use local_gradefiller\source\grade_source_interface;
 use local_gradefiller\source\grade_source_offlinequiz;
 use local_gradefiller\source\grade_source_papergrade;
 
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Keeps driver selection explicit and deterministic.

@@ -26,7 +26,6 @@ use local_gradefiller\source\grade_source_papergrade;
  * @package    local_gradefiller
  */
 final class source_papergrade_test extends gradefiller_testcase {
-
     protected function tearDown(): void {
         global $DB;
 
@@ -79,6 +78,7 @@ final class source_papergrade_test extends gradefiller_testcase {
     }
 
     public function test_fetch_grade_by_anonkey_returns_latest_approved_result(): void {
+
         global $DB;
 
         $this->resetAfterTest();
@@ -104,11 +104,7 @@ final class source_papergrade_test extends gradefiller_testcase {
             'timemodified' => 100,
         ]);
         $DB->insert_record('local_papergrade_results', (object)[
-            'examid' => $examid,
-            'anonymousid' => 123,
-            'grade' => 17.5,
-            'status' => 'ok',
-            'timemodified' => 200,
+            'examid' => $examid, 'anonymousid' => 123, 'grade' => 17.5, 'status' => 'ok', 'timemodified' => 200,
         ]);
         $DB->insert_record('local_papergrade_results', (object)[
             'examid' => $examid,

@@ -27,7 +27,6 @@ use local_gradefiller\gradefiller_testcase;
  * @package    local_gradefiller
  */
 final class gradebook_export_builder_test extends gradefiller_testcase {
-
     public function test_build_export_data_returns_one_row_per_enrolled_user(): void {
         $this->resetAfterTest();
         $this->setAdminUser();

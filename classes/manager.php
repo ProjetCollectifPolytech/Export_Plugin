@@ -30,7 +30,6 @@ use local_gradefiller\service\spreadsheet_fill_service;
 use local_gradefiller\spreadsheet\spreadsheet_format_interface;
 use local_gradefiller\source\grade_source_interface;
 
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Thin facade preserved for the existing pages, hooks and tests.
@@ -63,18 +62,15 @@ class manager {
      * Constructor.
      */
     public function __construct(
-        ?spreadsheet_format_registry $formatregistry = null,
-        ?grade_source_registry $driverregistry = null,
-        ?grade_lookup_service $gradelookupservice = null,
-        ?spreadsheet_fill_service $spreadsheetfillservice = null
+        spreadsheet_format_registry $formatregistry,
+        grade_source_registry $driverregistry,
+        grade_lookup_service $gradelookupservice,
+        spreadsheet_fill_service $spreadsheetfillservice
     ) {
-        $this->formatregistry = $formatregistry ?? new spreadsheet_format_registry();
-        $this->driverregistry = $driverregistry ?? new grade_source_registry();
-        $this->gradelookupservice = $gradelookupservice ?? new grade_lookup_service($this->driverregistry);
-        $this->spreadsheetfillservice = $spreadsheetfillservice ?? new spreadsheet_fill_service(
-            $this->formatregistry,
-            $this->gradelookupservice
-        );
+        $this->formatregistry = $formatregistry;
+        $this->driverregistry = $driverregistry;
+        $this->gradelookupservice = $gradelookupservice;
+        $this->spreadsheetfillservice = $spreadsheetfillservice;
     }
 
     /**

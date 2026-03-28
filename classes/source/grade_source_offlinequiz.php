@@ -34,7 +34,6 @@ namespace local_gradefiller\source;
  * @package    local_gradefiller
  */
 class grade_source_offlinequiz implements grade_source_interface {
-
     /**
      * Get the human-readable name of this driver
      *
@@ -51,9 +50,9 @@ class grade_source_offlinequiz implements grade_source_interface {
      * @return bool
      */
     public function supports($cm): bool {
+
         return $cm->modname === 'offlinequiz';
     }
-
     /**
      * Fetch grade for a specific anonymous identifier
      *
@@ -69,9 +68,9 @@ class grade_source_offlinequiz implements grade_source_interface {
         $cm = get_coursemodule_from_id('offlinequiz', $cmid, 0, false, MUST_EXIST);
         $offlinequiz = $DB->get_record('offlinequiz', ['id' => $cm->instance], '*', MUST_EXIST);
 
-        // Strategy 1: Check results with userid=0 and matching userkey in scanned pages
-        // This matches anonimapper's approach for anonymous results
-        $sql = "SELECT 
+        // Strategy 1: Check results with userid=0 and matching userkey in scanned pages.
+        // This matches Anonimapper's approach for anonymous results.
+        $sql = "SELECT
                     r.id,
                     r.sumgrades as grade,
                     og.sumgrades as maxgrade
@@ -86,7 +85,7 @@ class grade_source_offlinequiz implements grade_source_interface {
 
         $params = [
             'offlinequizid' => $offlinequiz->id,
-            'userkey' => $anonkey
+            'userkey' => $anonkey,
         ];
 
         $records = $DB->get_records_sql($sql, $params, 0, 1);
@@ -99,21 +98,7 @@ class grade_source_offlinequiz implements grade_source_interface {
             ];
         }
 
-        // Strategy 2: Check results directly if no scanned page found.
-        $sql2 = "SELECT 
-                    r.id,
-                    r.sumgrades as grade,
-                    og.sumgrades as maxgrade
-                FROM {offlinequiz_results} r
-                JOIN {offlinequiz_groups} og ON og.id = r.offlinegroupid
-                WHERE og.offlinequizid = :offlinequizid
-                  AND r.userid = 0
-                ORDER BY r.timemodified DESC";
-
-        $results = $DB->get_records_sql($sql2, ['offlinequizid' => $offlinequiz->id]);
-
-        // This is a fallback - we can't directly match without userkey.
-        // Return null to indicate no match found.
+        // No direct fallback exists here without a scanned anonymous identifier.
         return null;
     }
 

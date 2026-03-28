@@ -36,7 +36,6 @@ $string['gradefiller:use'] = 'Utiliser Grade Filler pour remplir les notes dans 
 // Driver names.
 $string['driver_offlinequiz'] = 'Test hors ligne (anonyme)';
 $string['driver_papergrade'] = 'Papergrade (scanner)';
-
 // Page.
 $string['page_title'] = 'Remplir les notes dans un tableur';
 $string['gradebook_export_page_title'] = 'Exporter les notes avec Grade Filler';
@@ -92,7 +91,6 @@ $string['event_page_viewed'] = 'Page Grade Filler consultée';
 $string['event_file_processed'] = 'Tableur Grade Filler traité';
 $string['event_page_viewed_desc'] = 'L\'utilisateur {$a->userid} a consulté Grade Filler pour le module {$a->cmid} dans le cours {$a->courseid}.';
 $string['event_file_processed_desc'] = 'L\'utilisateur {$a->userid} a traité un tableur Grade Filler pour le module {$a->cmid} dans le cours {$a->courseid} en utilisant la source {$a->gradesource} ({$a->matched} trouvés, {$a->unmatched} introuvables, {$a->errors} erreurs).';
-
 // Privacy.
 $string['privacy:metadata'] = 'Le plugin Grade Filler ne stocke pas de données personnelles.';
 

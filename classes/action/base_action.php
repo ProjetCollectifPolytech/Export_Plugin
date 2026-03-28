@@ -30,9 +30,9 @@ require_once($CFG->dirroot . '/local/gradefiller/lib.php');
 
 use context_module;
 use local_gradefiller\manager;
+use local_gradefiller\manager_factory;
 use moodle_exception;
 use moodle_url;
-
 /**
  * Abstract base class for action handlers.
  *
@@ -40,7 +40,6 @@ use moodle_url;
  * authentication, context setup, capability checks and redirect helpers.
  */
 abstract class base_action {
-
     /** @var int Course module ID */
     protected $cmid;
 
@@ -68,8 +67,7 @@ abstract class base_action {
         $this->cm = get_coursemodule_from_id('', $cmid, 0, false, MUST_EXIST);
         $this->course = $DB->get_record('course', ['id' => $this->cm->course], '*', MUST_EXIST);
         $this->context = context_module::instance($cmid);
-        $this->manager = new manager();
-
+        $this->manager = manager_factory::create_default();
         require_login($this->course, false, $this->cm);
         if (!local_gradefiller_user_can_process($this->context)) {
             require_capability('local/gradefiller:process', $this->context);
@@ -102,7 +100,6 @@ abstract class base_action {
         if (!data_submitted()) {
             throw new moodle_exception('error_post_required', 'local_gradefiller');
         }
-
         require_sesskey();
     }
 }

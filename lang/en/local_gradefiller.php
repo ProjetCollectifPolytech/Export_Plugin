@@ -73,7 +73,7 @@ $string['grade_source_help'] = 'Choose how to match identifiers in your file';
 $string['btn_process_download'] = 'Process and Download Filled File';
 
 // Formats.
-$string['format_university_standard_name'] = 'Apogee';
+$string['format_university_standard_name'] = 'Apoge';
 $string['format_university_standard_desc'] = 'Skip 17 header rows, Column A = ID, Column E = Grade';
 $string['gradebook_export_format_workbook_name'] = 'Workbook template';
 $string['gradebook_export_format_workbook_desc'] = 'Upload an XLSX or XLSM workbook. Grade Filler injects the classic Moodle export into a worksheet named "Export Moodle".';

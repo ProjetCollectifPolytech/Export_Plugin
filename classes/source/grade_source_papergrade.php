@@ -36,6 +36,8 @@ defined('MOODLE_INTERNAL') || die();
  * @package    local_gradefiller
  */
 class grade_source_papergrade implements grade_source_interface {
+    /** @var string[] Result statuses considered approved by Papergrade */
+    private const APPROVED_STATUSES = ['validated', 'ok'];
 
     /**
      * Get the human-readable name of this driver
@@ -93,19 +95,20 @@ class grade_source_papergrade implements grade_source_interface {
         // Find the exam record.
         $exam = $DB->get_record('local_papergrade_exam', ['offlinequizid' => $cm->instance], '*', MUST_EXIST);
 
-        // Fetch the validated result matching the anonymous ID.
-        // We use status = 'validated' to ensure the grade has been approved.
+        [$statussql, $statusparams] = $DB->get_in_or_equal(self::APPROVED_STATUSES, SQL_PARAMS_NAMED, 'status');
+
+        // Fetch the latest approved result matching the anonymous ID.
         $sql = "SELECT r.grade
                 FROM {local_papergrade_results} r
                 WHERE r.examid = :examid
                   AND r.anonymousid = :anonid
-                  AND r.status = 'validated'
+                  AND r.status {$statussql}
                 ORDER BY r.timemodified DESC";
-        
-        $params = [
+
+        $params = array_merge([
             'examid' => $exam->id,
             'anonid' => (int)$anonkey,
-        ];
+        ], $statusparams);
 
         $records = $DB->get_records_sql($sql, $params, 0, 1);
         $record = !empty($records) ? reset($records) : null;

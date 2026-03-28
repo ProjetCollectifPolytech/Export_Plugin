@@ -114,12 +114,9 @@ class manager {
 
         $this->drivers = [];
 
-        // Register built-in drivers.
-        $this->drivers[] = new grade_source_offlinequiz();
-
-        // The driver performs its own table checks and simply declines when
-        // local_papergrade is not installed for the current Moodle site.
+        // Register specific drivers before the generic Offline Quiz fallback.
         $this->drivers[] = new grade_source_papergrade();
+        $this->drivers[] = new grade_source_offlinequiz();
 
         return $this->drivers;
     }

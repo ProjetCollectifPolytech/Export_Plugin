@@ -5,7 +5,7 @@
 - **Date de rédaction :** 28 février 2026
 - **Composant :** local_gradefiller
 - **Version :** 2026022800
-- **Moodle requis :** 4.3+ (2023100900)
+- **Moodle requis :** 4.5+ (2024100700)
 - **Maturité :** MATURITY_ALPHA
 
 ---
@@ -39,7 +39,7 @@ Le plugin est construit autour de deux axes stratégiques (Strategy Pattern) :
 2. **Source de notes (Grade Source / Driver)**
    - Définit **D'OÙ** récupérer les notes (gradebook standard ou anonyme).
    - Interface : `grade_source_interface`
-   - Implémentations : `grade_source_offlinequiz`, `grade_source_anonymousgrader`
+   - Implémentations : `grade_source_papergrade`, `grade_source_offlinequiz`
 
 La classe `manager` orchestre l'ensemble du workflow :
 
@@ -80,8 +80,8 @@ local/gradefiller/
 │   │
 │   ├── source/
 │   │   ├── grade_source_interface.php          Interface des drivers
-│   │   ├── grade_source_offlinequiz.php        Driver Offline Quiz
-│   │   └── grade_source_anonymousgrader.php    Driver Anonymous Grader
+│   │   ├── grade_source_papergrade.php         Driver Papergrade
+│   │   └── grade_source_offlinequiz.php        Driver Offline Quiz
 │   │
 │   ├── spreadsheet/
 │   │   ├── spreadsheet_format_interface.php    Interface des formats
@@ -237,8 +237,8 @@ $handler->execute();
 
 - **`get_available_drivers(): array`**
   Retourne tous les drivers de source de notes.
-  Actuellement : `[grade_source_offlinequiz]`
-  > **Note :** `grade_source_anonymousgrader` n'est PAS enregistré dans cette méthode (à ajouter si nécessaire).
+  Actuellement : `[grade_source_papergrade, grade_source_offlinequiz]`
+  > **Note :** les drivers spécifiques sont enregistrés avant le fallback `offlinequiz`.
 
 - **`get_driver_for_cm($cm): ?grade_source_interface`**
   Retourne le premier driver compatible avec le CM donné.
@@ -347,25 +347,25 @@ $handler->execute();
 - **`is_anonymous_identifier($identifier)` :**
   Accepte tout identifiant non vide (le mode anonyme est choisi explicitement par l'enseignant).
 
-### 5.6 `grade_source_anonymousgrader` — `classes/source/grade_source_anonymousgrader.php`
+### 5.6 `grade_source_papergrade` — `classes/source/grade_source_papergrade.php`
 
 **Namespace :** `local_gradefiller\source`
 **Implements :** `grade_source_interface`
 
 - **`supports($cm)` :**
   - Vérifie que `$cm->modname === 'offlinequiz'`
-  - Vérifie l'existence de la table `local_anonymousgrader_exam`
-  - Vérifie qu'un enregistrement exam existe pour cette instance
+  - Vérifie l'existence de la table `local_papergrade_exam`
+  - Vérifie qu'un examen existe pour cette instance
+  - N'accepte que les examens `Papergrade` en mode `anonymous`
 
 - **`fetch_grade_by_anonkey($cmid, $anonkey)` :**
-  - Cherche dans `local_anonymousgrader_results`
-  - Filtre par `status = 'validated'`
+  - Cherche dans `local_papergrade_results`
+  - Filtre par `status IN ('validated', 'ok')`
+  - Retourne le résultat approuvé le plus récent
   - Retourne : `{grade, maxgrade}` ou `null`.
 
 - **`is_anonymous_identifier($identifier)` :**
   Retourne `true` si l'identifiant est numérique.
-
-> **NOTE :** Ce driver n'est PAS enregistré dans `manager::get_available_drivers()`. Pour l'activer, il faut l'ajouter dans cette méthode.
 
 ### 5.7 `download_handler` — `classes/util/download_handler.php`
 
@@ -664,7 +664,7 @@ Dans `version.php`, incrémenter `$plugin->version`.
 |---|---|
 | **L1** | **Écriture limitée aux formats ZIP** — La méthode `write_grades()` utilise `ZipArchive` et ne supporte que les formats basés sur ZIP (xlsx, xlsm). ~~Les formats xls/csv échouaient silencieusement~~ → **Corrigé en v1.2** : une validation rejette désormais les formats non supportés avec un message d'erreur clair. |
 | **L2** | **Pas d'auto-découverte des formats/drivers** — Les formats et drivers sont enregistrés manuellement dans le manager. Un système d'auto-découverte (scan des fichiers `format_*.php` et `grade_source_*.php`) est prévu. |
-| **L3** | **`grade_source_anonymousgrader` non enregistré** — Le driver est implémenté mais n'est pas ajouté dans `manager::get_available_drivers()`. Il faut l'ajouter manuellement. |
+| **L3** | **Couverture d'intégration HTTP partielle** — Les tests couvrent bien la logique métier, mais pas encore le flux navigateur complet autour de `move_uploaded_file()` et du traitement final dans Moodle. |
 | **L4** | **Pas de table de base de données propre** — Le plugin n'a pas de tables propres dans `db/install.xml`. Aucun historique de traitement n'est conservé. |
 | **L5** | **Pas de tests unitaires** — Aucun test PHPUnit n'est fourni. |
 | **L6** | **Structure XML ODS différente** — La méthode `write_grades()` cible `xl/worksheets/sheet1.xml` (format Excel). Pour ODS, le fichier XML principal est `content.xml` avec un namespace différent. L'écriture ODS est désormais rejetée en amont (voir L1). |
@@ -686,7 +686,7 @@ Dans `version.php`, incrémenter `$plugin->version`.
 | **A1** | Ajouter le support d'écriture pour XLS et CSV (Writers de PhpSpreadsheet comme fallback). |
 | **A2** | Implémenter l'auto-découverte des formats et drivers (scan des dossiers `classes/spreadsheet/` et `classes/source/`). |
 | **A3** | Ajouter un rapport de traitement affiché à l'utilisateur après le traitement. |
-| **A4** | Ajouter des tests PHPUnit couvrant `manager`, `format_university_standard` et les drivers. |
+| **A4** | Étendre la couverture PHPUnit aux flux HTTP d'upload et aux parcours d'export complets. |
 | **A5** | Utiliser le Moodle File API (draft area + `file_storage`) au lieu de `$_FILES`. |
 | **A6** | Ajouter un système de logging/audit avec table d'historisation. |
 | **A7** | Support multi-feuilles (choix de la feuille de calcul à traiter). |

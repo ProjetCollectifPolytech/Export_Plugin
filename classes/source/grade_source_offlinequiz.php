@@ -51,20 +51,7 @@ class grade_source_offlinequiz implements grade_source_interface {
      * @return bool
      */
     public function supports($cm): bool {
-        global $DB;
-
-        if ($cm->modname !== 'offlinequiz') {
-            return false;
-        }
-
-        // Don't claim activities managed by papergrade — let the papergrade driver handle those.
-        if ($DB->get_manager()->table_exists('local_papergrade_exam')) {
-            if ($DB->record_exists('local_papergrade_exam', ['offlinequizid' => $cm->instance])) {
-                return false;
-            }
-        }
-
-        return true;
+        return $cm->modname === 'offlinequiz';
     }
 
     /**

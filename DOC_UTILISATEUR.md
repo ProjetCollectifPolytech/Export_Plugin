@@ -3,7 +3,7 @@
 **Plugin Moodle — Remplisseur de Notes dans un Tableur**
 
 - **Date de rédaction :** 28 février 2026
-- **Compatible avec :** Moodle 4.3+
+- **Compatible avec :** Moodle 4.5+
 
 ---
 
@@ -162,7 +162,7 @@ Le lien vers Grade Filler apparaît automatiquement dans le menu d'administratio
 
 ### 7.2 Mode Anonyme
 
-- Disponible uniquement pour les activités supportant les notes anonymes (ex: Offline Quiz avec le plugin `local_anonymousgrader`).
+- Disponible pour les activités supportant les notes anonymes, notamment `Offline Quiz` natif et les examens traités par `Papergrade`.
 - Les identifiants du tableur sont des codes anonymes (codes-barres, etc.).
 - Le plugin utilise un "driver" spécifique à l'activité pour retrouver la note correspondant au code anonyme.
 
@@ -171,7 +171,7 @@ Le lien vers Grade Filler apparaît automatiquement dans le menu d'administratio
 | Driver | Description |
 |---|---|
 | **Offline Quiz** | Recherche dans les résultats de pages scannées (table `offlinequiz_scanned_pages`, champ `userkey`). |
-| **Anonymous Grader (Scanner)** | Recherche dans les résultats validés du plugin `local_anonymousgrader`. |
+| **Papergrade (Scanner)** | Recherche dans les résultats approuvés du plugin `local_papergrade` (`validated` ou `ok`). |
 
 ---
 

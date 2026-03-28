@@ -78,7 +78,7 @@ final class source_papergrade_test extends gradefiller_testcase {
         $this->assertTrue($driver->supports($cm));
     }
 
-    public function test_fetch_grade_by_anonkey_returns_latest_validated_result(): void {
+    public function test_fetch_grade_by_anonkey_returns_latest_approved_result(): void {
         global $DB;
 
         $this->resetAfterTest();
@@ -107,7 +107,7 @@ final class source_papergrade_test extends gradefiller_testcase {
             'examid' => $examid,
             'anonymousid' => 123,
             'grade' => 17.5,
-            'status' => 'validated',
+            'status' => 'ok',
             'timemodified' => 200,
         ]);
         $DB->insert_record('local_papergrade_results', (object)[

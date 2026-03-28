@@ -4,7 +4,7 @@
 
 ### Prerequisites
 
-The plugin must be installed inside a live Moodle 4.3+ instance:
+The plugin must be installed inside a live Moodle 4.5+ instance:
 
 ```
 {moodle_root}/local/gradefiller/
@@ -99,7 +99,7 @@ tests/
 ├── file_handler_test.php                      # Unit tests – file_handler utility
 ├── format_university_standard_test.php        # Unit tests – Apogée spreadsheet format
 ├── source_grade_source_offlinequiz_test.php   # Unit tests – offlinequiz grade driver
-├── source_grade_source_anonymousgrader_test.php # Unit tests – anonymousgrader driver
+├── source_papergrade_test.php                 # Integration tests – papergrade grade driver
 ├── fixtures/                                  # Optional XLSX fixture for spreadsheet tests
 │   └── sample_apogee.xlsx
 └── behat/

@@ -48,15 +48,25 @@ class file_handler {
             throw new \moodle_exception('error_no_file', 'local_gradefiller', '', $error);
         }
 
-        // Move uploaded file to temp directory.
-        $tempdir = make_temp_directory('gradefiller');
-        $tempfile = $tempdir . '/' . clean_filename($_FILES[$filekey]['name']);
-        
+        $tempfile = self::generate_temp_upload_path($_FILES[$filekey]['name']);
+
         if (!move_uploaded_file($_FILES[$filekey]['tmp_name'], $tempfile)) {
             throw new \moodle_exception('error_moving_file', 'local_gradefiller');
         }
 
         return $tempfile;
+    }
+
+    /**
+     * Build a unique temporary destination path for an uploaded file.
+     *
+     * @param string $originalname Original client filename
+     * @return string Absolute path inside Moodle temp storage
+     */
+    public static function generate_temp_upload_path(string $originalname): string {
+        $tempdir = make_temp_directory('gradefiller');
+
+        return $tempdir . DIRECTORY_SEPARATOR . self::build_temp_upload_filename($originalname);
     }
 
     /**
@@ -80,6 +90,28 @@ class file_handler {
      */
     public static function validate_extension(string $filename, array $allowedext): bool {
         $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-        return in_array($extension, $allowedext);
+        $normalizedallowed = array_map('strtolower', $allowedext);
+
+        return in_array($extension, $normalizedallowed, true);
+    }
+
+    /**
+     * Create a collision-resistant filename while keeping a readable stem.
+     *
+     * @param string $originalname Original client filename
+     * @return string Safe unique filename
+     */
+    private static function build_temp_upload_filename(string $originalname): string {
+        $cleanname = clean_filename($originalname);
+        $extension = strtolower(pathinfo($cleanname, PATHINFO_EXTENSION));
+        $basename = trim((string)pathinfo($cleanname, PATHINFO_FILENAME), '.');
+        $basename = $basename !== '' ? $basename : 'upload';
+        $suffix = str_replace('.', '', uniqid('', true));
+
+        if ($extension !== '') {
+            return $basename . '_' . $suffix . '.' . $extension;
+        }
+
+        return $basename . '_' . $suffix;
     }
 }

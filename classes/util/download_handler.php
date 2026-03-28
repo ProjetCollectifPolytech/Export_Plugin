@@ -34,59 +34,14 @@ defined('MOODLE_INTERNAL') || die();
 class download_handler {
 
     /**
-     * MIME type mappings for common spreadsheet formats
-     */
-    const MIME_TYPES = [
-        'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'xlsm' => 'application/vnd.ms-excel.sheet.macroEnabled.12',
-        'xlsb' => 'application/vnd.ms-excel.sheet.binary.macroEnabled.12',
-        'xls' => 'application/vnd.ms-excel',
-        'ods' => 'application/vnd.oasis.opendocument.spreadsheet',
-        'csv' => 'text/csv',
-    ];
-
-    /**
      * Send file for download and terminate script
-     *
-     * This method:
-     * 1. Cleans all output buffers
-     * 2. Sends appropriate HTTP headers
-     * 3. Reads and outputs file content
-     * 4. Cleans up temporary file
-     * 5. Terminates script execution
      *
      * @param string $filepath Path to the file to send
      * @param string $downloadname Desired filename for download (without path)
      * @return void This method terminates script execution
      */
     public static function send_file(string $filepath, string $downloadname): void {
-        // Clean all output buffers before sending file.
-        while (ob_get_level()) {
-            ob_end_clean();
-        }
-
-        // Detect file extension and set appropriate MIME type.
-        $extension = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
-        $mimetype = self::MIME_TYPES[$extension] ?? 'application/octet-stream';
-
-        // Get file size.
-        $filesize = filesize($filepath);
-
-        // Send HTTP headers.
-        header('Content-Type: ' . $mimetype);
-        header('Content-Disposition: attachment; filename="' . $downloadname . '"');
-        header('Content-Length: ' . $filesize);
-        header('Cache-Control: max-age=0');
-        header('Pragma: public');
-
-        // Read and output file content.
-        readfile($filepath);
-
-        // Clean up temp file.
-        @unlink($filepath);
-
-        // Terminate script execution.
-        die();
+        send_temp_file($filepath, clean_filename($downloadname));
     }
 
     /**

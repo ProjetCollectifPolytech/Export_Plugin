@@ -90,6 +90,8 @@ $string['file_processed'] = 'Fichier traité : {$a->matched} notes remplies, {$a
 // Events.
 $string['event_page_viewed'] = 'Page Grade Filler consultée';
 $string['event_file_processed'] = 'Tableur Grade Filler traité';
+$string['event_page_viewed_desc'] = 'L\'utilisateur {$a->userid} a consulté Grade Filler pour le module {$a->cmid} dans le cours {$a->courseid}.';
+$string['event_file_processed_desc'] = 'L\'utilisateur {$a->userid} a traité un tableur Grade Filler pour le module {$a->cmid} dans le cours {$a->courseid} en utilisant la source {$a->gradesource} ({$a->matched} trouvés, {$a->unmatched} introuvables, {$a->errors} erreurs).';
 
 // Privacy.
 $string['privacy:metadata'] = 'Le plugin Grade Filler ne stocke pas de données personnelles.';
@@ -111,7 +113,13 @@ $string['error_export_format_not_found'] = 'Format d\'export Grade Filler introu
 $string['error_export_template_required'] = 'Un fichier modèle est requis';
 $string['error_export_template_invalid'] = 'Classeur modèle invalide : {$a}';
 $string['error_export_template_write'] = 'Impossible d\'écrire le classeur d\'export Grade Filler : {$a}';
+$string['error_export_template_invalid_generic'] = 'Le classeur modèle n\'a pas pu être lu.';
+$string['error_export_template_write_generic'] = 'Le classeur modèle n\'a pas pu être mis à jour.';
 $string['error_export_template_extension'] = 'Extension de classeur modèle non supportée : {$a}. Utilisez XLSX ou XLSM.';
 $string['error_no_permission'] = 'Vous n\'avez pas la permission d\'accéder à cette page';
 $string['error_no_grade_item'] = 'Cette activité n\'a pas d\'élément de notation';
 $string['error_unsupported_extension'] = 'Extension de fichier non supportée : {$a}. Utilisez XLSX ou XLSM.';
+$string['error_operation_failed'] = 'L\'export demandé n\'a pas pu être effectué.';
+$string['error_file_read_failed'] = 'Le tableur n\'a pas pu être lu.';
+$string['error_file_write_failed'] = 'Le tableur n\'a pas pu être mis à jour.';
+$string['error_format_invalid_generic'] = 'Le tableur ne correspond pas au format sélectionné.';

@@ -26,6 +26,8 @@ namespace local_gradefiller\util;
 
 defined('MOODLE_INTERNAL') || die();
 
+use moodle_exception;
+
 /**
  * File handler utility class
  *
@@ -45,13 +47,13 @@ class file_handler {
     public static function handle_upload(string $filekey): string {
         if (!isset($_FILES[$filekey]) || $_FILES[$filekey]['error'] !== UPLOAD_ERR_OK) {
             $error = isset($_FILES[$filekey]) ? $_FILES[$filekey]['error'] : 'No file in $_FILES';
-            throw new \moodle_exception('error_no_file', 'local_gradefiller', '', $error);
+            throw new moodle_exception('error_no_file', 'local_gradefiller', '', $error);
         }
 
         $tempfile = self::generate_temp_upload_path($_FILES[$filekey]['name']);
 
         if (!move_uploaded_file($_FILES[$filekey]['tmp_name'], $tempfile)) {
-            throw new \moodle_exception('error_moving_file', 'local_gradefiller');
+            throw new moodle_exception('error_moving_file', 'local_gradefiller');
         }
 
         return $tempfile;
@@ -105,6 +107,10 @@ class file_handler {
         $cleanname = clean_filename($originalname);
         $extension = strtolower(pathinfo($cleanname, PATHINFO_EXTENSION));
         $basename = trim((string)pathinfo($cleanname, PATHINFO_FILENAME), '.');
+        $basename = $basename !== '' ? $basename : 'upload';
+        $basename = preg_replace('/\s+/', '_', $basename);
+        $basename = preg_replace('/_+/', '_', $basename);
+        $basename = trim((string)$basename, '_');
         $basename = $basename !== '' ? $basename : 'upload';
         $suffix = str_replace('.', '', uniqid('', true));
 

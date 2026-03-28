@@ -30,6 +30,7 @@ require_once($CFG->dirroot . '/local/gradefiller/lib.php');
 
 use context_module;
 use local_gradefiller\manager;
+use moodle_exception;
 use moodle_url;
 
 /**
@@ -99,7 +100,7 @@ abstract class base_action {
      */
     protected function require_post_request(): void {
         if (!data_submitted()) {
-            throw new \moodle_exception('error_post_required', 'local_gradefiller');
+            throw new moodle_exception('error_post_required', 'local_gradefiller');
         }
 
         require_sesskey();

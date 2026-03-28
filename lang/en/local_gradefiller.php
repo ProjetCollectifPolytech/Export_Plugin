@@ -90,6 +90,8 @@ $string['file_processed'] = 'File processed: {$a->matched} grades filled, {$a->u
 // Events.
 $string['event_page_viewed'] = 'Grade Filler page viewed';
 $string['event_file_processed'] = 'Grade Filler spreadsheet processed';
+$string['event_page_viewed_desc'] = 'User {$a->userid} viewed Grade Filler for module {$a->cmid} in course {$a->courseid}.';
+$string['event_file_processed_desc'] = 'User {$a->userid} processed a Grade Filler spreadsheet for module {$a->cmid} in course {$a->courseid} using source {$a->gradesource} ({$a->matched} matched, {$a->unmatched} unmatched, {$a->errors} errors).';
 
 // Privacy.
 $string['privacy:metadata'] = 'The Grade Filler plugin does not store personal data.';
@@ -111,7 +113,13 @@ $string['error_export_format_not_found'] = 'Grade Filler export format not found
 $string['error_export_template_required'] = 'A workbook template file is required';
 $string['error_export_template_invalid'] = 'Invalid workbook template: {$a}';
 $string['error_export_template_write'] = 'Unable to write the Grade Filler export workbook: {$a}';
+$string['error_export_template_invalid_generic'] = 'The workbook template could not be read.';
+$string['error_export_template_write_generic'] = 'The workbook template could not be updated.';
 $string['error_export_template_extension'] = 'Unsupported workbook template extension: {$a}. Use XLSX or XLSM.';
 $string['error_no_permission'] = 'You do not have permission to access this page';
 $string['error_no_grade_item'] = 'This activity does not have a grade item';
 $string['error_unsupported_extension'] = 'Unsupported file extension: {$a}. Use XLSX or XLSM.';
+$string['error_operation_failed'] = 'The requested export could not be completed.';
+$string['error_file_read_failed'] = 'The spreadsheet could not be read.';
+$string['error_file_write_failed'] = 'The spreadsheet could not be updated.';
+$string['error_format_invalid_generic'] = 'The spreadsheet does not match the selected format.';

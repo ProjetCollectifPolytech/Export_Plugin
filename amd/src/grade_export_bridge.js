@@ -71,7 +71,7 @@ define([], function() {
     };
 
     /**
-     * Create or refresh a Grade Filler option in the export menu.
+     * Create or refresh one Grade Filler option in the export menu.
      *
      * @param {HTMLElement} listbox
      * @param {Object} optionConfig
@@ -97,30 +97,30 @@ define([], function() {
         }
 
         bindOption(option, optionConfig);
-
         return option;
     };
 
     /**
-     * Add or refresh the Grade Filler options on the native export selector.
+     * Inject the bridge options into Moodle's native export selector.
      *
      * @param {Object} config Bridge configuration
+     * @returns {boolean}
      */
-    var injectOption = function(config) {
+    var applyBridge = function(config) {
         var input = document.querySelector('input[name="exportas"]');
         if (!input || !config || !config.options || !config.options.length) {
-            return;
+            return false;
         }
 
         var selectMenu = input.closest('.select-menu');
         if (!selectMenu) {
-            return;
+            return false;
         }
 
         var listbox = selectMenu.querySelector('[role="listbox"]');
         var toggle = selectMenu.querySelector('.dropdown-toggle');
         if (!listbox || !toggle) {
-            return;
+            return false;
         }
 
         var selectedOption = null;
@@ -134,11 +134,10 @@ define([], function() {
         if (window.location.pathname.indexOf('/local/gradefiller/gradeexport.php') !== -1) {
             var selectedConfig = findSelectedConfig(config);
             if (!selectedConfig || !selectedOption) {
-                return;
+                return true;
             }
 
             input.value = selectedConfig.url;
-
             listbox.querySelectorAll('.dropdown-item[role="option"]').forEach(function(item) {
                 item.removeAttribute('aria-selected');
             });
@@ -151,6 +150,39 @@ define([], function() {
                 toggle.textContent = selectedConfig.label;
             }
         }
+
+        return true;
+    };
+
+    /**
+     * Retry bridge injection until the dropdown has been rendered.
+     *
+     * @param {Object} config Bridge configuration
+     */
+    var scheduleBridge = function(config) {
+        if (applyBridge(config)) {
+            return;
+        }
+
+        var attempts = 0;
+        var interval = window.setInterval(function() {
+            attempts++;
+            if (applyBridge(config) || attempts >= 20) {
+                window.clearInterval(interval);
+            }
+        }, 150);
+
+        if (window.MutationObserver) {
+            var observer = new MutationObserver(function() {
+                if (applyBridge(config)) {
+                    observer.disconnect();
+                }
+            });
+            observer.observe(document.documentElement, {childList: true, subtree: true});
+            window.setTimeout(function() {
+                observer.disconnect();
+            }, 4000);
+        }
     };
 
     return {
@@ -160,16 +192,21 @@ define([], function() {
          * @param {Object} config Bridge configuration
          */
         init: function(config) {
-            injectOption(config);
-            document.addEventListener('DOMContentLoaded', function() {
-                injectOption(config);
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', function() {
+                    scheduleBridge(config);
+                });
+            } else {
+                scheduleBridge(config);
+            }
+
+            document.addEventListener('click', function(event) {
+                if (event.target.closest('.select-menu')) {
+                    window.setTimeout(function() {
+                        scheduleBridge(config);
+                    }, 0);
+                }
             });
-            window.setTimeout(function() {
-                injectOption(config);
-            }, 50);
-            window.setTimeout(function() {
-                injectOption(config);
-            }, 300);
         }
     };
 });

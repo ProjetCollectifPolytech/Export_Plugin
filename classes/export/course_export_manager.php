@@ -26,7 +26,8 @@ namespace local_gradefiller\export;
 
 defined('MOODLE_INTERNAL') || die();
 
-use local_gradefiller\export\format\workbook_template_format;
+use moodle_exception;
+use stdClass;
 
 /**
  * Handles gradebook export workflows backed by uploaded templates.
@@ -34,8 +35,17 @@ use local_gradefiller\export\format\workbook_template_format;
  * @package    local_gradefiller
  */
 class course_export_manager {
-    /** @var course_export_format_interface[]|null */
-    private ?array $formats = null;
+    /** @var course_export_format_registry */
+    private course_export_format_registry $registry;
+
+    /**
+     * Constructor.
+     *
+     * @param course_export_format_registry|null $registry
+     */
+    public function __construct(?course_export_format_registry $registry = null) {
+        $this->registry = $registry ?? new course_export_format_registry();
+    }
 
     /**
      * Get the list of available Grade Filler course export formats.
@@ -43,15 +53,7 @@ class course_export_manager {
      * @return array
      */
     public function get_available_formats(): array {
-        if ($this->formats !== null) {
-            return $this->formats;
-        }
-
-        $this->formats = [
-            new workbook_template_format(),
-        ];
-
-        return $this->formats;
+        return $this->registry->get_available_formats();
     }
 
     /**
@@ -61,13 +63,7 @@ class course_export_manager {
      * @return course_export_format_interface|null
      */
     public function get_format(string $formatkey): ?course_export_format_interface {
-        foreach ($this->get_available_formats() as $format) {
-            if ($format->get_key() === $formatkey) {
-                return $format;
-            }
-        }
-
-        return null;
+        return $this->registry->get_format($formatkey);
     }
 
     /**
@@ -84,14 +80,14 @@ class course_export_manager {
     public function process_export(
         string $filepath,
         string $formatkey,
-        \stdClass $course,
+        stdClass $course,
         int $groupid,
-        \stdClass $formdata,
+        stdClass $formdata,
         string $originalfilename
     ): array {
         $format = $this->get_format($formatkey);
         if ($format === null) {
-            throw new \moodle_exception('error_export_format_not_found', 'local_gradefiller', '', $formatkey);
+            throw new moodle_exception('error_export_format_not_found', 'local_gradefiller', '', $formatkey);
         }
 
         $builder = new gradebook_export_builder($course, $groupid, $formdata);

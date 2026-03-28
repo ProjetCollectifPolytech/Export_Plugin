@@ -28,12 +28,17 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/grade/export/lib.php');
 
+use coding_exception;
+use grade_export;
+use graded_users_iterator;
+use stdClass;
+
 /**
  * Reuses Moodle's grade export base class to build a matrix of exported values.
  *
  * @package    local_gradefiller
  */
-class gradebook_export_builder extends \grade_export {
+class gradebook_export_builder extends grade_export {
     /** @var string Plugin key used internally by grade_export */
     public $plugin = 'gradefiller';
 
@@ -44,7 +49,7 @@ class gradebook_export_builder extends \grade_export {
      * @param int $groupid Current group filter
      * @param \stdClass $formdata Validated form data
      */
-    public function __construct(\stdClass $course, int $groupid, \stdClass $formdata) {
+    public function __construct(stdClass $course, int $groupid, stdClass $formdata) {
         parent::__construct($course, $groupid, $formdata);
 
         // Match the one-step export plugins and include custom profile fields.
@@ -81,7 +86,7 @@ class gradebook_export_builder extends \grade_export {
 
         $headers[] = get_string('timeexported', 'gradeexport_ods');
 
-        $iterator = new \graded_users_iterator($this->course, $this->columns, $this->groupid);
+        $iterator = new graded_users_iterator($this->course, $this->columns, $this->groupid);
         $iterator->require_active_enrolment($this->onlyactive);
         $iterator->allow_user_custom_fields($this->usercustomfields);
         $iterator->init();
@@ -127,6 +132,6 @@ class gradebook_export_builder extends \grade_export {
      * Not used by the builder.
      */
     public function print_grades() {
-        throw new \coding_exception('gradebook_export_builder does not stream files directly.');
+        throw new coding_exception('gradebook_export_builder does not stream files directly.');
     }
 }

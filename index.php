@@ -25,12 +25,20 @@
 require_once(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
 
+use core\notification;
+use core\output\notification as output_notification;
+use local_gradefiller\action\process_upload;
+use local_gradefiller\error\error_message_resolver;
+use local_gradefiller\event\page_viewed;
 use local_gradefiller\manager;
+use local_gradefiller\page\upload_page;
+
+$pagebuilder = new upload_page();
 
 $cmid = required_param('id', PARAM_INT);
 $action = optional_param('action', '', PARAM_ALPHANUMEXT);
 $actionmap = [
-    'process_upload' => \local_gradefiller\action\process_upload::class,
+    'process_upload' => process_upload::class,
 ];
 
 $cm = get_coursemodule_from_id('', $cmid, 0, false, MUST_EXIST);
@@ -61,7 +69,7 @@ if ($action !== '') {
             new moodle_url('/local/gradefiller/index.php', ['id' => $cmid]),
             get_string('error_invalid_action', 'local_gradefiller'),
             null,
-            \core\output\notification::NOTIFY_ERROR
+            output_notification::NOTIFY_ERROR
         );
     }
 
@@ -72,38 +80,30 @@ if ($action !== '') {
     } catch (Exception $e) {
         redirect(
             new moodle_url('/local/gradefiller/index.php', ['id' => $cmid]),
-            $e->getMessage(),
+            error_message_resolver::to_user_message($e),
             null,
-            \core\output\notification::NOTIFY_ERROR
+            output_notification::NOTIFY_ERROR
         );
     }
 }
 
 if (isset($SESSION->gradefiller_success)) {
-    \core\notification::success($SESSION->gradefiller_success);
+    notification::success($SESSION->gradefiller_success);
     unset($SESSION->gradefiller_success);
 }
 if (isset($SESSION->gradefiller_error)) {
-    \core\notification::error($SESSION->gradefiller_error);
+    notification::error($SESSION->gradefiller_error);
     unset($SESSION->gradefiller_error);
 }
 
 $manager = new manager();
 $canprocess = local_gradefiller_user_can_process($context);
 $formats = $manager->get_available_formats();
-$formatoptions = [];
-foreach ($formats as $format) {
-    $formatoptions[] = [
-        'key' => $format->get_key(),
-        'name' => $format->get_name(),
-        'description' => $format->get_description(),
-    ];
-}
 
 $driver = $manager->get_driver_for_cm($cm);
 $supportsanonymous = ($driver !== null);
 
-\local_gradefiller\event\page_viewed::create([
+page_viewed::create([
     'objectid' => $cm->id,
     'courseid' => $course->id,
     'context' => $context,
@@ -113,17 +113,7 @@ $supportsanonymous = ($driver !== null);
     ],
 ])->trigger();
 
-$templatedata = [
-    'cmid' => $cmid,
-    'activity_name' => $cm->name,
-    'activity_type' => get_string('modulename', $cm->modname),
-    'formats' => $formatoptions,
-    'supports_anonymous' => $supportsanonymous,
-    'driver_name' => $supportsanonymous ? $driver->get_name() : '',
-    'can_process' => $canprocess,
-    'sesskey' => sesskey(),
-    'wwwroot' => $CFG->wwwroot,
-];
+$templatedata = $pagebuilder->build($cmid, $cm, $formats, $canprocess, $driver, $CFG->wwwroot);
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('page_title', 'local_gradefiller'));

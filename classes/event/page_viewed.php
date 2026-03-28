@@ -18,12 +18,15 @@ namespace local_gradefiller\event;
 
 defined('MOODLE_INTERNAL') || die();
 
+use core\event\base;
+use moodle_url;
+
 /**
  * Event fired when the Grade Filler page is viewed.
  *
  * @package    local_gradefiller
  */
-class page_viewed extends \core\event\base {
+class page_viewed extends base {
     /**
      * Initialise event metadata.
      *
@@ -50,8 +53,11 @@ class page_viewed extends \core\event\base {
      * @return string
      */
     public function get_description(): string {
-        return "The user with id '{$this->userid}' viewed Grade Filler for course module '{$this->objectid}' " .
-            "in course '{$this->courseid}'.";
+        return get_string('event_page_viewed_desc', 'local_gradefiller', (object) [
+            'userid' => $this->userid,
+            'cmid' => $this->objectid,
+            'courseid' => $this->courseid,
+        ]);
     }
 
     /**
@@ -59,7 +65,7 @@ class page_viewed extends \core\event\base {
      *
      * @return \moodle_url
      */
-    public function get_url(): \moodle_url {
-        return new \moodle_url('/local/gradefiller/index.php', ['id' => $this->objectid]);
+    public function get_url(): moodle_url {
+        return new moodle_url('/local/gradefiller/index.php', ['id' => $this->objectid]);
     }
 }

@@ -18,12 +18,15 @@ namespace local_gradefiller\event;
 
 defined('MOODLE_INTERNAL') || die();
 
+use core\event\base;
+use moodle_url;
+
 /**
  * Event fired when a spreadsheet is processed successfully.
  *
  * @package    local_gradefiller
  */
-class file_processed extends \core\event\base {
+class file_processed extends base {
     /**
      * Initialise event metadata.
      *
@@ -50,9 +53,15 @@ class file_processed extends \core\event\base {
      * @return string
      */
     public function get_description(): string {
-        return "The user with id '{$this->userid}' processed a Grade Filler spreadsheet for course module " .
-            "'{$this->objectid}' in course '{$this->courseid}' using source '{$this->other['gradesource']}' " .
-            "({$this->other['matched']} matched, {$this->other['unmatched']} unmatched, {$this->other['errors']} errors).";
+        return get_string('event_file_processed_desc', 'local_gradefiller', (object) [
+            'userid' => $this->userid,
+            'cmid' => $this->objectid,
+            'courseid' => $this->courseid,
+            'gradesource' => $this->other['gradesource'] ?? '',
+            'matched' => $this->other['matched'] ?? 0,
+            'unmatched' => $this->other['unmatched'] ?? 0,
+            'errors' => $this->other['errors'] ?? 0,
+        ]);
     }
 
     /**
@@ -60,7 +69,7 @@ class file_processed extends \core\event\base {
      *
      * @return \moodle_url
      */
-    public function get_url(): \moodle_url {
-        return new \moodle_url('/local/gradefiller/index.php', ['id' => $this->objectid]);
+    public function get_url(): moodle_url {
+        return new moodle_url('/local/gradefiller/index.php', ['id' => $this->objectid]);
     }
 }

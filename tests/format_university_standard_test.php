@@ -220,6 +220,33 @@ class format_university_standard_test extends \advanced_testcase {
     }
 
     /**
+     * write_grades should create the target grade cell when the template row
+     * exists but the grade cell is initially missing.
+     *
+     * @covers \local_gradefiller\spreadsheet\format_university_standard::write_grades
+     */
+    public function test_write_grades_creates_missing_grade_cell(): void {
+        $this->require_phpspreadsheet();
+
+        $filepath = $this->create_apogee_like_workbook([
+            ['row' => 18, 'A' => 'ID-001'],
+        ]);
+
+        $output = $this->format->write_grades($filepath, [
+            (object) [
+                'identifier' => 'ID-001',
+                'grade' => 14.5,
+                'row_number' => 18,
+            ],
+        ]);
+
+        $workbook = \PhpOffice\PhpSpreadsheet\IOFactory::load($output);
+        $sheet = $workbook->getActiveSheet();
+
+        $this->assertSame(14.5, (float) $sheet->getCell('E18')->getValue());
+    }
+
+    /**
      * Create a lightweight workbook compatible with the university format.
      *
      * @param array $rows Row definitions keyed by Excel column letters

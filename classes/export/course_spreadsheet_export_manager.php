@@ -28,6 +28,7 @@ defined('MOODLE_INTERNAL') || die();
 
 use grade_item;
 use local_gradefiller\manager;
+use local_gradefiller\manager_factory;
 use local_gradefiller\spreadsheet\multi_activity_grade_aggregation_interface;
 use local_gradefiller\spreadsheet\spreadsheet_format_interface;
 use stdClass;
@@ -62,7 +63,7 @@ class course_spreadsheet_export_manager {
         $spreadsheetformat->validate_file($filepath);
         $identifiers = $spreadsheetformat->read_identifiers($filepath);
         $gradeitems = $this->get_selected_grade_items($course, $formdata);
-        $resolver = new manager();
+        $resolver = manager_factory::create_default();
 
         $stats = [
             'total' => count($identifiers),

@@ -51,83 +51,70 @@ class course_export_form extends moodleform {
         $formats = $this->_customdata['formats'] ?? [];
         $selectedspreadsheet = $this->_customdata['selectedspreadsheet'] ?? null;
 
+        $this->define_grade_items_section($course, $CFG);
+        $this->define_export_options_section($course, $CFG);
+        $this->define_gradefiller_options_section($course, $formats, $selectedspreadsheet, $CFG);
+
+        $mform->addElement('hidden', 'id', $course->id);
+        $mform->setType('id', PARAM_INT);
+        $this->add_sticky_action_buttons(false, get_string('gradebook_export_download', 'local_gradefiller'));
+    }
+
+    /**
+     * Define the section listing selectable grade items.
+     *
+     * @param \stdClass $course
+     * @param \stdClass $cfg
+     * @return void
+     */
+    private function define_grade_items_section(\stdClass $course, \stdClass $cfg): void {
+        $mform = $this->_form;
         $mform->addElement('header', 'gradeitems', get_string('gradeitemsinc', 'grades'));
         $mform->setExpanded('gradeitems', true);
 
-        $switch = grade_get_setting($course->id, 'aggregationposition', $CFG->grade_aggregationposition);
+        $switch = grade_get_setting($course->id, 'aggregationposition', $cfg->grade_aggregationposition);
         $sequence = new grade_seq($course->id, $switch);
-        $needsmultiselect = false;
         $canviewhidden = has_capability('moodle/grade:viewhidden', context_course::instance($course->id));
+        $needsmultiselect = false;
 
-        if ($gradeitems = $sequence->items) {
-            foreach ($gradeitems as $gradeitem) {
-                if ($gradeitem->is_hidden() && !$canviewhidden) {
-                    continue;
-                }
-
-                $mform->addElement(
-                    'advcheckbox',
-                    'itemids[' . $gradeitem->id . ']',
-                    $gradeitem->get_name(),
-                    null,
-                    ['group' => 1]
-                );
-                $mform->setDefault('itemids[' . $gradeitem->id . ']', 1);
-                $needsmultiselect = true;
+        foreach ($sequence->items ?? [] as $gradeitem) {
+            if ($gradeitem->is_hidden() && !$canviewhidden) {
+                continue;
             }
+
+            $mform->addElement(
+                'advcheckbox',
+                'itemids[' . $gradeitem->id . ']',
+                $gradeitem->get_name(),
+                null,
+                ['group' => 1]
+            );
+            $mform->setDefault('itemids[' . $gradeitem->id . ']', 1);
+            $needsmultiselect = true;
         }
 
         if ($needsmultiselect) {
             $this->add_checkbox_controller(1, null, null, 1);
         }
+    }
 
+    /**
+     * Define Moodle-native export options reused by the bridge page.
+     *
+     * @param \stdClass $course
+     * @param \stdClass $cfg
+     * @return void
+     */
+    private function define_export_options_section(\stdClass $course, \stdClass $cfg): void {
+        $mform = $this->_form;
         $mform->addElement('header', 'options', get_string('exportformatoptions', 'grades'));
         $mform->setExpanded('options', false);
 
         $mform->addElement('advcheckbox', 'export_feedback', get_string('exportfeedback', 'grades'));
-        $mform->setDefault('export_feedback', $CFG->grade_export_exportfeedback ?? 0);
+        $mform->setDefault('export_feedback', $cfg->grade_export_exportfeedback ?? 0);
 
-        $coursecontext = \context_course::instance($course->id);
-        if (has_capability('moodle/course:viewsuspendedusers', $coursecontext)) {
-            $mform->addElement('advcheckbox', 'export_onlyactive', get_string('exportonlyactive', 'grades'));
-            $mform->setType('export_onlyactive', PARAM_BOOL);
-            $mform->setDefault('export_onlyactive', 1);
-            $mform->addHelpButton('export_onlyactive', 'exportonlyactive', 'grades');
-        } else {
-            $mform->addElement('hidden', 'export_onlyactive', 1);
-            $mform->setType('export_onlyactive', PARAM_BOOL);
-            $mform->setConstant('export_onlyactive', 1);
-        }
-
-        $checkboxes = [];
-        $checkboxes[] = $mform->createElement(
-            'advcheckbox',
-            'display[real]',
-            null,
-            get_string('real', 'grades'),
-            null,
-            [0, GRADE_DISPLAY_TYPE_REAL]
-        );
-        $checkboxes[] = $mform->createElement(
-            'advcheckbox',
-            'display[percentage]',
-            null,
-            get_string('percentage', 'grades'),
-            null,
-            [0, GRADE_DISPLAY_TYPE_PERCENTAGE]
-        );
-        $checkboxes[] = $mform->createElement(
-            'advcheckbox',
-            'display[letter]',
-            null,
-            get_string('letter', 'grades'),
-            null,
-            [0, GRADE_DISPLAY_TYPE_LETTER]
-        );
-        $mform->addGroup($checkboxes, 'displaytypes', get_string('gradeexportdisplaytypes', 'grades'), ' ', false);
-        $mform->setDefault('display[real]', $CFG->grade_export_displaytype == GRADE_DISPLAY_TYPE_REAL);
-        $mform->setDefault('display[percentage]', $CFG->grade_export_displaytype == GRADE_DISPLAY_TYPE_PERCENTAGE);
-        $mform->setDefault('display[letter]', $CFG->grade_export_displaytype == GRADE_DISPLAY_TYPE_LETTER);
+        $this->add_export_only_active_field($course);
+        $this->add_display_type_group($cfg);
 
         $mform->addElement(
             'select',
@@ -135,7 +122,27 @@ class course_export_form extends moodleform {
             get_string('gradeexportdecimalpoints', 'grades'),
             [0 => 0, 1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5]
         );
-        $mform->setDefault('decimals', $CFG->grade_export_decimalpoints);
+        $mform->setDefault('decimals', $cfg->grade_export_decimalpoints);
+    }
+
+    /**
+     * Define Grade Filler-specific fields on top of Moodle's export form.
+     *
+     * @param \stdClass $course
+     * @param array $formats
+     * @param object|null $selectedspreadsheet
+     * @param \stdClass $cfg
+     * @return void
+     */
+    private function define_gradefiller_options_section(
+        \stdClass $course,
+        array $formats,
+        $selectedspreadsheet,
+        \stdClass $cfg
+    ): void {
+        $mform = $this->_form;
+        $formatoptions = $this->build_format_options($formats);
+        $acceptedextensions = $this->build_accepted_extensions($formats, $selectedspreadsheet);
 
         $sectiontitle = $selectedspreadsheet !== null
             ? $selectedspreadsheet->get_name()
@@ -143,28 +150,6 @@ class course_export_form extends moodleform {
 
         $mform->addElement('header', 'gradefilleroptions', $sectiontitle);
         $mform->setExpanded('gradefilleroptions', true);
-
-        $formatoptions = [];
-        foreach ($formats as $format) {
-            $formatoptions[$format->get_key()] = $format->get_name() . ' - ' . $format->get_description();
-        }
-
-        $acceptedextensions = [];
-        if ($selectedspreadsheet !== null) {
-            foreach ($selectedspreadsheet->get_supported_extensions() as $extension) {
-                $acceptedextensions[] = '.' . ltrim((string) $extension, '.');
-            }
-        } else {
-            foreach ($formats as $format) {
-                foreach ($format->get_supported_extensions() as $extension) {
-                    $acceptedextensions[] = '.' . ltrim((string) $extension, '.');
-                }
-            }
-        }
-        $acceptedextensions = array_values(array_unique($acceptedextensions));
-        if (empty($acceptedextensions)) {
-            $acceptedextensions = ['.xlsx'];
-        }
 
         if ($selectedspreadsheet !== null && $selectedspreadsheet->get_upload_help() !== '') {
             $mform->addElement(
@@ -201,16 +186,114 @@ class course_export_form extends moodleform {
 
         $mform->addElement('filepicker', 'templatefile', $filepickerlabel, null, [
             'accepted_types' => $acceptedextensions,
-            'maxbytes' => get_max_upload_file_size($CFG->maxbytes, $course->maxbytes),
+            'maxbytes' => get_max_upload_file_size($cfg->maxbytes, $course->maxbytes),
         ]);
         $mform->addRule('templatefile', null, 'required', null, 'client');
         if ($selectedspreadsheet === null) {
             $mform->addHelpButton('templatefile', 'gradebook_template_file', 'local_gradefiller');
         }
+    }
 
-        $mform->addElement('hidden', 'id', $course->id);
-        $mform->setType('id', PARAM_INT);
-        $this->add_sticky_action_buttons(false, get_string('gradebook_export_download', 'local_gradefiller'));
+    /**
+     * Add the active-user filter, falling back to a hidden constant when required.
+     *
+     * @param \stdClass $course
+     * @return void
+     */
+    private function add_export_only_active_field(\stdClass $course): void {
+        $mform = $this->_form;
+        $coursecontext = context_course::instance($course->id);
+
+        if (has_capability('moodle/course:viewsuspendedusers', $coursecontext)) {
+            $mform->addElement('advcheckbox', 'export_onlyactive', get_string('exportonlyactive', 'grades'));
+            $mform->setType('export_onlyactive', PARAM_BOOL);
+            $mform->setDefault('export_onlyactive', 1);
+            $mform->addHelpButton('export_onlyactive', 'exportonlyactive', 'grades');
+            return;
+        }
+
+        $mform->addElement('hidden', 'export_onlyactive', 1);
+        $mform->setType('export_onlyactive', PARAM_BOOL);
+        $mform->setConstant('export_onlyactive', 1);
+    }
+
+    /**
+     * Add Moodle's grade display type selector group.
+     *
+     * @param \stdClass $cfg
+     * @return void
+     */
+    private function add_display_type_group(\stdClass $cfg): void {
+        $mform = $this->_form;
+        $checkboxes = [];
+        $checkboxes[] = $mform->createElement(
+            'advcheckbox',
+            'display[real]',
+            null,
+            get_string('real', 'grades'),
+            null,
+            [0, GRADE_DISPLAY_TYPE_REAL]
+        );
+        $checkboxes[] = $mform->createElement(
+            'advcheckbox',
+            'display[percentage]',
+            null,
+            get_string('percentage', 'grades'),
+            null,
+            [0, GRADE_DISPLAY_TYPE_PERCENTAGE]
+        );
+        $checkboxes[] = $mform->createElement(
+            'advcheckbox',
+            'display[letter]',
+            null,
+            get_string('letter', 'grades'),
+            null,
+            [0, GRADE_DISPLAY_TYPE_LETTER]
+        );
+        $mform->addGroup($checkboxes, 'displaytypes', get_string('gradeexportdisplaytypes', 'grades'), ' ', false);
+        $mform->setDefault('display[real]', $cfg->grade_export_displaytype == GRADE_DISPLAY_TYPE_REAL);
+        $mform->setDefault('display[percentage]', $cfg->grade_export_displaytype == GRADE_DISPLAY_TYPE_PERCENTAGE);
+        $mform->setDefault('display[letter]', $cfg->grade_export_displaytype == GRADE_DISPLAY_TYPE_LETTER);
+    }
+
+    /**
+     * Build human-readable format options.
+     *
+     * @param array $formats
+     * @return array<string, string>
+     */
+    private function build_format_options(array $formats): array {
+        $formatoptions = [];
+        foreach ($formats as $format) {
+            $formatoptions[$format->get_key()] = $format->get_name() . ' - ' . $format->get_description();
+        }
+
+        return $formatoptions;
+    }
+
+    /**
+     * Build the accepted extension list for the selected spreadsheet scope.
+     *
+     * @param array $formats
+     * @param object|null $selectedspreadsheet
+     * @return string[]
+     */
+    private function build_accepted_extensions(array $formats, $selectedspreadsheet): array {
+        $acceptedextensions = [];
+        if ($selectedspreadsheet !== null) {
+            foreach ($selectedspreadsheet->get_supported_extensions() as $extension) {
+                $acceptedextensions[] = '.' . ltrim((string)$extension, '.');
+            }
+        } else {
+            foreach ($formats as $format) {
+                foreach ($format->get_supported_extensions() as $extension) {
+                    $acceptedextensions[] = '.' . ltrim((string)$extension, '.');
+                }
+            }
+        }
+
+        $acceptedextensions = array_values(array_unique($acceptedextensions));
+        return !empty($acceptedextensions) ? $acceptedextensions : ['.xlsx'];
     }
 
     /**

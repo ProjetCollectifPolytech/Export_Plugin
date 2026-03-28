@@ -44,20 +44,20 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
  * @package    local_gradefiller
  */
 class format_university_standard implements spreadsheet_format_interface {
-    /** @var string[] Supported file extensions for this format */
-    private const ALLOWED_EXTENSIONS = ['xlsx', 'xlsm'];
-
-    /** @var string OpenXML worksheet path used by the template */
-    private const SHEET_XML_PATH = 'xl/worksheets/sheet1.xml';
-
-    /** @var string Grade column letter in the target worksheet */
-    private const GRADE_COLUMN_LETTER = 'E';
-
     /** @var int Number of header rows to skip */
-    public const HEADER_ROWS = 17;
+    public const HEADER_ROWS = university_standard_spec::HEADER_ROWS;
 
-    /** @var int Preferred identifier column index (zero-based) */
-    private const COLUMN_IDENTIFIER = 0;
+    /** @var university_standard_spec */
+    private university_standard_spec $spec;
+
+    /**
+     * Constructor.
+     *
+     * @param university_standard_spec|null $spec
+     */
+    public function __construct(?university_standard_spec $spec = null) {
+        $this->spec = $spec ?? new university_standard_spec();
+    }
 
     /**
      * Get the human-readable name of this format.
@@ -92,7 +92,7 @@ class format_university_standard implements spreadsheet_format_interface {
      * @return string[]
      */
     public function get_supported_extensions(): array {
-        return self::ALLOWED_EXTENSIONS;
+        return $this->spec->get_supported_extensions();
     }
 
     /**
@@ -176,11 +176,15 @@ class format_university_standard implements spreadsheet_format_interface {
                 continue;
             }
 
-            $cellvalues[self::GRADE_COLUMN_LETTER . (int) $grade->row_number] = $grade->grade;
+            $cellvalues[$this->spec->get_grade_column_letter() . (int) $grade->row_number] = $grade->grade;
         }
 
         try {
-            return (new openxml_workbook_writer())->write_numeric_cells($filepath, self::SHEET_XML_PATH, $cellvalues);
+            return (new openxml_workbook_writer())->write_numeric_cells(
+                $filepath,
+                $this->spec->get_sheet_xml_path(),
+                $cellvalues
+            );
         } catch (moodle_exception $e) {
             throw $e;
         } catch (Exception $e) {
@@ -227,7 +231,7 @@ class format_university_standard implements spreadsheet_format_interface {
      */
     private function validate_extension(string $filepath): string {
         $extension = strtolower(pathinfo($filepath, PATHINFO_EXTENSION));
-        if (!in_array($extension, self::ALLOWED_EXTENSIONS, true)) {
+        if (!in_array($extension, $this->spec->get_supported_extensions(), true)) {
             throw new moodle_exception('error_unsupported_extension', 'local_gradefiller', '', $extension);
         }
 
@@ -246,13 +250,14 @@ class format_university_standard implements spreadsheet_format_interface {
      * @return int
      */
     private function resolve_identifier_column(Worksheet $sheet, int $highestrow): int {
-        if ($this->count_identifier_candidates($sheet, self::COLUMN_IDENTIFIER, $highestrow) > 0) {
-            return self::COLUMN_IDENTIFIER;
+        $primarycolumn = $this->spec->get_primary_identifier_column();
+        if ($this->count_identifier_candidates($sheet, $primarycolumn, $highestrow) > 0) {
+            return $primarycolumn;
         }
 
-        $bestcolumn = self::COLUMN_IDENTIFIER;
+        $bestcolumn = $primarycolumn;
         $bestscore = 0;
-        foreach ([0, 1, 2, 3] as $candidate) {
+        foreach ($this->spec->get_identifier_candidate_columns() as $candidate) {
             $score = $this->count_identifier_candidates($sheet, $candidate, $highestrow);
             if ($score > $bestscore) {
                 $bestcolumn = $candidate;

@@ -14,21 +14,20 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+namespace local_gradefiller;
+
 /**
- * Gradebook export bridge page for Grade Filler.
+ * Tests for the manager factory.
  *
  * @package    local_gradefiller
- * @copyright  2026
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+final class manager_factory_test extends \advanced_testcase {
 
-require_once(__DIR__ . '/../../config.php');
-require_once($CFG->dirroot . '/grade/export/lib.php');
-require_once($CFG->dirroot . '/local/gradefiller/lib.php');
+    public function test_create_default_returns_wired_manager(): void {
+        $manager = manager_factory::create_default();
 
-use local_gradefiller\controller\grade_export_controller;
-
-$id = required_param('id', PARAM_INT);
-$selectedspreadsheetkey = optional_param('spreadsheetformat', '', PARAM_ALPHANUMEXT);
-
-(new grade_export_controller())->handle($id, $selectedspreadsheetkey);
+        $this->assertInstanceOf(manager::class, $manager);
+        $this->assertSame('university_standard', $manager->get_format('university_standard')->get_key());
+        $this->assertCount(2, $manager->get_available_drivers());
+    }
+}

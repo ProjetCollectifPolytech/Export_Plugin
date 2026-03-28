@@ -18,12 +18,15 @@ namespace local_gradefiller;
 
 require_once(__DIR__ . '/gradefiller_testcase.php');
 
+use local_gradefiller\source\grade_source_offlinequiz;
+use local_gradefiller\source\grade_source_papergrade;
+
 /**
- * Tests for the manager class.
+ * Tests for the grade source registry.
  *
  * @package    local_gradefiller
  */
-final class manager_test extends gradefiller_testcase {
+final class grade_source_registry_test extends gradefiller_testcase {
     /** @var string[] */
     private array $createdtables = [];
 
@@ -32,22 +35,12 @@ final class manager_test extends gradefiller_testcase {
         parent::tearDown();
     }
 
-    public function test_get_format_returns_the_university_standard_handler(): void {
-        $manager = manager_factory::create_default();
-        $format = $manager->get_format('university_standard');
+    public function test_get_available_drivers_keeps_specific_driver_first(): void {
+        $drivers = (new grade_source_registry())->get_available_drivers();
 
-        $this->assertNotNull($format);
-        $this->assertSame('university_standard', $format->get_key());
-    }
-
-    public function test_get_driver_for_cm_returns_null_for_unsupported_activity(): void {
-        $this->resetAfterTest();
-        $this->setAdminUser();
-
-        $course = $this->getDataGenerator()->create_course();
-        $cm = $this->create_label_cm($course);
-
-        $this->assertNull(manager_factory::create_default()->get_driver_for_cm($cm));
+        $this->assertCount(2, $drivers);
+        $this->assertInstanceOf(grade_source_papergrade::class, $drivers[0]);
+        $this->assertInstanceOf(grade_source_offlinequiz::class, $drivers[1]);
     }
 
     public function test_get_driver_for_cm_prefers_papergrade_when_exam_exists(): void {
@@ -60,7 +53,7 @@ final class manager_test extends gradefiller_testcase {
         $course = $this->getDataGenerator()->create_course();
         [, $cm] = $this->create_offlinequiz_activity($course);
 
-        $DB->insert_record('local_papergrade_exam', (object)[
+        $DB->insert_record('local_papergrade_exam', (object) [
             'offlinequizid' => $cm->instance,
             'grade' => 20.0,
             'mode' => 'anonymous',
@@ -68,40 +61,13 @@ final class manager_test extends gradefiller_testcase {
             'timemodified' => time(),
         ]);
 
-        $driver = manager_factory::create_default()->get_driver_for_cm($cm);
+        $driver = (new grade_source_registry())->get_driver_for_cm($cm);
 
-        $this->assertInstanceOf(\local_gradefiller\source\grade_source_papergrade::class, $driver);
-    }
-
-    public function test_get_supported_grade_sources_includes_anonymous_for_offlinequiz(): void {
-        $this->resetAfterTest();
-        $this->setAdminUser();
-
-        $course = $this->getDataGenerator()->create_course();
-        [, $cm] = $this->create_offlinequiz_activity($course);
-
-        $sources = manager_factory::create_default()->get_supported_grade_sources($cm);
-
-        $this->assertSame(
-            [manager::GRADE_SOURCE_STANDARD, manager::GRADE_SOURCE_ANONYMOUS],
-            $sources
-        );
-    }
-
-    public function test_is_supported_grade_source_validates_available_sources(): void {
-        $this->resetAfterTest();
-        $this->setAdminUser();
-
-        $course = $this->getDataGenerator()->create_course();
-        $cm = $this->create_label_cm($course);
-
-        $manager = manager_factory::create_default();
-        $this->assertTrue($manager->is_supported_grade_source($cm, manager::GRADE_SOURCE_STANDARD));
-        $this->assertFalse($manager->is_supported_grade_source($cm, manager::GRADE_SOURCE_ANONYMOUS));
+        $this->assertInstanceOf(grade_source_papergrade::class, $driver);
     }
 
     /**
-     * Create the minimal Papergrade exam table required by the manager routing test.
+     * Create the minimal Papergrade exam table required by the registry routing test.
      *
      * @return void
      */
